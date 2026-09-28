@@ -15,7 +15,7 @@ const PARK_ARC = 53.44 * DEG;       // две дуги R = 4,6 м сдвигаю
 const XWALK_FRONT = 102.4;
 const JUNCTION_FRONT = 122.8;
 
-function buildPath() {
+export function buildPath() {
   const pts = [];
   for (let x = START_POSE.x; x <= 124; x += 0.5) pts.push({ x, z: 0 });
   for (let a = 0.02; a < Math.PI / 2; a += 0.02) pts.push({ x: 124 + 8 * Math.sin(a), z: -8 + 8 * Math.cos(a) });
@@ -57,7 +57,7 @@ function stopCtl(car, d, cruise) {
   return speedCtl(car, Math.min(cruise, Math.sqrt(1.6 * (d - 0.05))));
 }
 
-function control(w, S, path, o) {
+export function control(w, S, path, o) {
   const car = w.car, g = carGeo(car), E = w.exam;
   const actions = [];
   const once = (key, action) => { if (!S.done[key]) { S.done[key] = true; actions.push(action); } };

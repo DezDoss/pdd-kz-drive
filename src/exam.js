@@ -136,7 +136,8 @@ const STEP_EX = {
     } else if (!s.started) {
       const back = s.stopX - car.x;
       if (back > s.maxBack) s.maxBack = back;
-      if (s.maxBack > HILL.rollbackMax && !s.rolled) { s.rolled = true; penal(E, 'rollback', 'откат ' + fmtM(s.maxBack)); }
+      // штраф — когда машина перестала катиться назад, с фактической величиной отката
+      if (s.maxBack > HILL.rollbackMax && !s.rolled && car.v > -0.02) { s.rolled = true; penal(E, 'rollback', 'откат ' + fmtM(s.maxBack)); }
       standAndGo(E, s, car, HILL, { early: 'hillEarly', late: 'hillLate' });
     }
     if (rx > HILL.zoneX1) done(E);
