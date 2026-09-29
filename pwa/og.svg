@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0d1115"/>
+  <rect x="0" y="500" width="1200" height="130" fill="#20252b"/>
+  <g fill="#f5c400">
+    <rect x="30" y="559" width="70" height="12"/><rect x="150" y="559" width="70" height="12"/><rect x="270" y="559" width="70" height="12"/>
+    <rect x="390" y="559" width="70" height="12"/><rect x="510" y="559" width="70" height="12"/><rect x="630" y="559" width="70" height="12"/>
+    <rect x="750" y="559" width="70" height="12"/><rect x="870" y="559" width="70" height="12"/><rect x="990" y="559" width="70" height="12"/>
+    <rect x="1110" y="559" width="70" height="12"/>
+  </g>
+  <rect x="880" y="110" width="240" height="240" rx="22" fill="#0d4a9e"/>
+  <path d="M1000 142 L1092 302 H908 Z" fill="#d32011" stroke="#d32011" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M1000 176 L1064 288 H936 Z" fill="#ffffff"/>
+  <text x="1000" y="278" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="900" font-size="70" fill="#16181a">У</text>
+  <text x="80" y="150" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="26" letter-spacing="3" fill="#f5c400">ТРЕНАЖЁР · КАТЕГОРИЯ B · КАЗАХСТАН</text>
+  <text x="76" y="270" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="900" font-size="112" fill="#eef2f5">АВТОДРОМ</text>
+  <text x="80" y="350" font-family="Helvetica Neue, Arial, sans-serif" font-size="36" fill="#b8c2cc">Подъём, параллельная парковка, переход,</text>
+  <text x="80" y="398" font-family="Helvetica Neue, Arial, sans-serif" font-size="36" fill="#b8c2cc">светофор — баллы по приказу МВД № 862</text>
+</svg>

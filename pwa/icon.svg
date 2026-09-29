@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0d4a9e"/>
+  <rect x="0" y="392" width="512" height="120" fill="#20252b"/>
+  <g fill="#f5c400">
+    <rect x="18" y="446" width="44" height="12"/><rect x="92" y="446" width="44" height="12"/>
+    <rect x="166" y="446" width="44" height="12"/><rect x="240" y="446" width="44" height="12"/>
+    <rect x="314" y="446" width="44" height="12"/><rect x="388" y="446" width="44" height="12"/>
+    <rect x="462" y="446" width="44" height="12"/>
+  </g>
+  <path d="M256 92 L408 356 H104 Z" fill="#d32011" stroke="#d32011" stroke-width="26" stroke-linejoin="round"/>
+  <path d="M256 146 L362 330 H150 Z" fill="#ffffff"/>
+  <text x="256" y="314" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-weight="900" font-size="124" fill="#16181a">У</text>
+</svg>
