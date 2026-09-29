@@ -1,0 +1,2715 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="description" content="Тренажёр практического экзамена на права категории B в Казахстане: 6 упражнений автодрома, штрафные баллы по приказу МВД РК № 862.">
+<meta name="theme-color" content="#0d1115">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Автодром">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Автодром ПДД РК">
+<meta property="og:description" content="Тренажёр практического экзамена на права категории B: подъём, парковка, переход, светофор. Баллы — как на настоящем автодроме.">
+<meta property="og:url" content="https://dezdoss.github.io/pdd-kz-drive/">
+<meta property="og:image" content="https://dezdoss.github.io/pdd-kz-drive/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="fonts/fonts.css">
+<title>Автодром ПДД РК</title>
+<style>
+  [hidden] { display: none !important; }
+  *, *::before, *::after { box-sizing: border-box; }
+  /* Один визуальный мир: тёмный интерфейс поверх дневной сцены. Цвета — из дорожных знаков и разметки. */
+  :root {
+    --bg: #0d1115;
+    --panel: rgba(12, 16, 21, 0.74);
+    --panel-solid: #151b21;
+    --line: rgba(255, 255, 255, 0.13);
+    --text: #eef2f5;
+    --muted: #9eaab5;
+    --sign-blue: #0d4a9e;
+    --sign-blue-hi: #3f7fd8;
+    --mark-yellow: #f5c400;
+    --sign-red: #d32011;
+    --go: #2fdc7c;
+    --amber: #ffad1f;
+    --paper: #f4f6f8;
+    --paper-ink: #12171c;
+    --paper-rule: #d3dae1;
+    --paper-muted: #5b6773;
+    --display: 'Fira Sans Extra Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+    --body: 'Fira Sans', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'Fira Mono', 'SF Mono', Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: var(--bg); color: var(--text);
+    font: 15px/1.45 var(--body); -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, summary:focus-visible { outline: 2px solid var(--mark-yellow); outline-offset: 2px; }
+  kbd {
+    display: inline-block; min-width: 1.5em; padding: 0 .38em; margin: 0 .1em;
+    font: 500 12px/1.55 var(--mono); text-align: center; color: var(--text);
+    border: 1px solid rgba(255, 255, 255, .35); border-bottom-width: 2px; border-radius: 4px;
+    background: rgba(255, 255, 255, .06);
+  }
+  #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+  /* ---------------------------------------------------------------- HUD */
+  .hud { position: fixed; inset: 0; pointer-events: none; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .task {
+    position: absolute; left: 16px; top: calc(16px + env(safe-area-inset-top, 0px));
+    width: min(430px, calc(100vw - 196px)); padding: 10px; display: grid; gap: 8px;
+  }
+  .plate {
+    background: var(--sign-blue); border-radius: 7px; padding: 8px 12px 9px;
+    box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px rgba(0, 0, 0, .35);
+  }
+  .plate-top { display: flex; justify-content: space-between; gap: 8px; font: 700 13px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+  .plate-name { font: 800 26px/1.05 var(--display); text-transform: uppercase; letter-spacing: .01em; margin-top: 3px; text-wrap: balance; }
+  .hint { margin: 0; font-size: 15px; line-height: 1.4; min-height: 2.8em; }
+  .progress { display: flex; gap: 4px; }
+  .progress span {
+    flex: 1; text-align: center; font: 700 12px/20px var(--display); letter-spacing: .04em;
+    border-radius: 4px; background: rgba(255, 255, 255, .08); color: var(--muted);
+  }
+  .progress span.active { background: #fff; color: var(--sign-blue); }
+  .progress span.done { background: rgba(47, 220, 124, .2); color: var(--go); }
+  .progress span.bad { background: rgba(245, 196, 0, .2); color: var(--mark-yellow); }
+  .progress span.skipped { background: rgba(211, 32, 17, .3); color: #ff8a80; }
+
+  .score {
+    position: absolute; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px));
+    width: 164px; padding: 10px 12px; text-align: right;
+  }
+  .pts { font: 500 42px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .pts small { font-size: 16px; color: var(--muted); margin-left: 2px; }
+  .pts.warn { color: var(--mark-yellow); }
+  .pts.fail { color: #ff6b5e; }
+  .pts-label { font: 700 12px/1.3 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+  .clock { margin-top: 8px; font: 500 18px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+  .clock small { font-size: 12px; color: var(--muted); }
+  .ex-clock { margin-top: 6px; font: 500 13px/1.3 var(--mono); color: var(--mark-yellow); min-height: 1.3em; font-variant-numeric: tabular-nums; }
+
+  .buttons { position: absolute; right: 196px; top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; gap: 6px; pointer-events: auto; }
+  .chip {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 10px;
+    font: 600 13px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(8px);
+  }
+  .chip:hover { border-color: rgba(255, 255, 255, .35); }
+
+  .toasts { position: absolute; right: 16px; top: calc(196px + env(safe-area-inset-top, 0px)); width: min(340px, 44vw); display: grid; gap: 6px; }
+  .toast { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 8px 10px; font-size: 13.5px; line-height: 1.35; animation: toast-in .25s ease-out; }
+  .toast b { font: 500 14px/1.25 var(--mono); padding: 2px 6px; border-radius: 5px; background: var(--mark-yellow); color: #151515; }
+  .toast.remark b { background: var(--sign-blue-hi); color: #fff; font-family: var(--display); letter-spacing: .05em; }
+  .toast.info b { background: rgba(255, 255, 255, .16); color: var(--text); }
+  .toast.hard b { background: var(--sign-red); color: #fff; }
+  .toast small { display: block; color: var(--muted); margin-top: 2px; }
+  @keyframes toast-in { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .flash {
+    position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%);
+    font: 800 clamp(44px, 9vw, 96px)/1 var(--display); letter-spacing: .04em; text-transform: uppercase;
+    color: #fff; text-shadow: 0 4px 24px rgba(0, 0, 0, .45); opacity: 0; transition: opacity .3s;
+    white-space: nowrap;
+  }
+  .flash.on { opacity: 1; }
+  .flash.small { font-size: clamp(22px, 4vw, 34px); }
+
+  .dash {
+    position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+  }
+  .speed { font: 500 44px/1 var(--mono); font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+  .speed small { display: block; font: 700 11px/1.2 var(--display); letter-spacing: .08em; color: var(--muted); text-align: right; }
+  .limit {
+    flex: none; width: 38px; height: 38px; border-radius: 50%; background: #fff; color: #161616;
+    box-shadow: inset 0 0 0 5px var(--sign-red); display: grid; place-items: center; font: 700 17px/1 var(--display);
+  }
+  .limit.over { animation: pulse .5s infinite alternate; }
+  @keyframes pulse { to { transform: scale(1.12); } }
+  .gears { display: flex; gap: 2px; font: 700 18px/1 var(--display); }
+  .gears span { width: 22px; text-align: center; padding: 4px 0; border-radius: 4px; color: rgba(255, 255, 255, .38); }
+  .gears span.on { background: #fff; color: #111; }
+  .blinkers { display: flex; gap: 6px; }
+  .blinkers svg { width: 26px; height: 26px; fill: rgba(255, 255, 255, .16); }
+  .blinkers svg.on { fill: var(--go); filter: drop-shadow(0 0 6px rgba(47, 220, 124, .7)); }
+  .tells { display: flex; gap: 5px; flex-wrap: wrap; max-width: 210px; }
+  .tell { font: 700 11px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 5px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+  .tell.alert { border-color: transparent; background: var(--sign-red); color: #fff; }
+  .tell.warn { border-color: transparent; background: var(--amber); color: #1b1300; }
+  .wheel { width: 38px; height: 38px; transition: transform .05s linear; }
+
+  .minimap { position: absolute; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 230px; height: 160px; padding: 0; }
+
+  /* ---------------------------------------------------------------- сенсорное управление */
+  .touch { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; pointer-events: none; }
+  .t-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; pointer-events: auto; }
+  .t-row button, .t-gears button {
+    min-width: 44px; height: 40px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--panel); backdrop-filter: blur(8px); font: 700 14px/1 var(--display); letter-spacing: .04em; text-transform: uppercase;
+  }
+  .t-gears { display: flex; gap: 3px; }
+  .t-gears button { min-width: 36px; padding: 0; }
+  .t-gears button.on, .t-row button.on { background: #fff; color: #111; }
+  .t-row button.alert { background: var(--sign-red); color: #fff; border-color: transparent; }
+  .t-row button.blink { background: var(--go); color: #06150c; }
+  .t-main { display: flex; justify-content: space-between; align-items: end; gap: 12px; pointer-events: auto; }
+  .t-wheel {
+    position: relative; flex: 1; max-width: 300px; height: 76px; border-radius: 38px; border: 1px solid var(--line);
+    background: var(--panel); backdrop-filter: blur(8px); touch-action: none;
+  }
+  .t-wheel span { position: absolute; inset: 0; display: grid; place-items: center; font: 700 12px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
+  .t-knob { position: absolute; top: 8px; left: calc(50% - 30px); width: 60px; height: 60px; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .4); pointer-events: none; }
+  .t-pedals { display: flex; gap: 10px; }
+  .t-pedals button {
+    width: 84px; height: 108px; border-radius: 14px; border: 1px solid var(--line); touch-action: none;
+    font: 800 15px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; backdrop-filter: blur(8px);
+  }
+  #t-brake { background: rgba(211, 32, 17, .55); }
+  #t-gas { background: rgba(47, 220, 124, .38); height: 124px; }
+  .t-pedals button.pressed { filter: brightness(1.5); transform: translateY(2px); }
+
+  /* ---------------------------------------------------------------- экраны */
+  .screen {
+    position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(90deg, rgba(8, 11, 14, .9) 0%, rgba(8, 11, 14, .72) 46%, rgba(8, 11, 14, .1) 100%);
+    -webkit-user-select: text; user-select: text;
+  }
+  .menu-card { max-width: 560px; margin-left: clamp(0px, 4vw, 56px); display: grid; gap: 18px; }
+  .eyebrow { margin: 0; font: 700 13px/1.3 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--mark-yellow); }
+  h1 { margin: 0; font: 800 clamp(52px, 11vw, 92px)/.92 var(--display); letter-spacing: .005em; text-transform: uppercase; text-wrap: balance; }
+  h1 span { display: block; font-size: .42em; letter-spacing: .06em; color: var(--muted); margin-top: .35em; }
+  .lede { margin: 0; font-size: 16px; color: #d5dce2; max-width: 60ch; }
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .mode {
+    text-align: left; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06);
+    font: 800 22px/1.1 var(--display); letter-spacing: .03em; text-transform: uppercase;
+  }
+  .mode small { display: block; margin-top: 6px; font: 400 13.5px/1.35 var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+  .mode.primary { background: var(--mark-yellow); color: #151515; border-color: transparent; }
+  .mode.primary small { color: #3a3200; }
+  .mode:hover { filter: brightness(1.08); }
+  details { border-top: 1px solid var(--line); padding-top: 12px; }
+  summary { cursor: pointer; font: 700 15px/1.3 var(--display); letter-spacing: .08em; text-transform: uppercase; list-style: none; display: flex; justify-content: space-between; }
+  summary::after { content: '+'; color: var(--muted); }
+  details[open] summary::after { content: '−'; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin-top: 12px; font-size: 14px; align-items: center; }
+  .keys dt { white-space: nowrap; }
+  .keys dd { margin: 0; color: #cfd6dc; }
+  .table-wrap { overflow-x: auto; margin-top: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 700 12px/1.3 var(--display); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; padding-right: 0; }
+  td.kt { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .history { font-size: 14px; color: #cfd6dc; }
+  .history ol { margin: 8px 0 0; padding-left: 1.2em; }
+  .history .ok { color: var(--go); } .history .no { color: #ff7b6e; }
+  .source { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 64ch; }
+
+  /* протокол */
+  .result { background: rgba(8, 11, 14, .78); }
+  .protocol {
+    position: relative; max-width: 760px; margin: 0 auto; background: var(--paper); color: var(--paper-ink);
+    border-radius: 6px; padding: clamp(18px, 4vw, 40px); box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+  }
+  .protocol header { display: grid; gap: 4px; border-bottom: 2px solid var(--paper-ink); padding-bottom: 12px; }
+  .protocol .doc { font: 700 13px/1.3 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--paper-muted); }
+  .protocol h2 { margin: 0; font: 800 clamp(26px, 5vw, 36px)/1.05 var(--display); text-transform: uppercase; }
+  .protocol .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--paper-muted); }
+  .protocol .meta b { color: var(--paper-ink); font-family: var(--mono); font-weight: 500; }
+  .stamp {
+    position: absolute; right: clamp(14px, 4vw, 40px); top: clamp(16px, 3vw, 30px); transform: rotate(-9deg);
+    font: 800 clamp(26px, 5vw, 40px)/1 var(--display); letter-spacing: .08em; padding: 8px 14px;
+    border: 4px double currentColor; border-radius: 8px; opacity: .88; mix-blend-mode: multiply; text-transform: uppercase;
+  }
+  .stamp.pass { color: #1f7a45; } .stamp.fail { color: #c21d10; }
+  .protocol h3 { margin: 22px 0 8px; font: 800 17px/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+  .protocol table th { color: var(--paper-muted); }
+  .protocol th, .protocol td { border-bottom: 1px solid var(--paper-rule); }
+  .protocol td.kt { color: var(--paper-muted); }
+  .errs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .errs li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; font-size: 14.5px; }
+  .errs .p { font: 500 15px/1.3 var(--mono); text-align: center; padding: 3px 0; border-radius: 5px; background: #ffe27a; height: fit-content; }
+  .errs .p.hard { background: #c21d10; color: #fff; }
+  .errs .p.pdd { background: #dce8f8; color: var(--sign-blue); font: 700 12px/1.6 var(--display); letter-spacing: .06em; }
+  .errs small { display: block; color: var(--paper-muted); font-size: 13px; margin-top: 2px; }
+  .errs .tip { color: #2a3642; }
+  .clean { margin: 0; font-size: 15px; color: #1f7a45; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  .actions button { padding: 11px 18px; border-radius: 8px; border: 1px solid var(--paper-rule); background: #fff; color: var(--paper-ink); font: 800 16px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; }
+  .actions button.primary { background: var(--paper-ink); color: #fff; border-color: transparent; }
+
+  .pause { display: grid; place-items: center; background: rgba(8, 11, 14, .66); }
+  .pause-card { display: grid; gap: 10px; min-width: 240px; padding: 22px; text-align: center; }
+  .pause-card h2 { margin: 0 0 6px; font: 800 34px/1 var(--display); text-transform: uppercase; }
+  .pause-card button { padding: 11px 16px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, .08); font: 800 16px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; }
+  .pause-card button.primary { background: var(--mark-yellow); color: #151515; border-color: transparent; }
+
+  .loading { position: fixed; inset: 0; display: grid; place-items: center; font: 700 14px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+  /* узкие экраны: подсказка и баллы сверху, педали снизу */
+  @media (max-width: 760px) {
+    .task { left: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); width: calc(100vw - 142px); padding: 8px; gap: 6px; }
+    .plate { padding: 6px 9px 7px; }
+    .plate-name { font-size: 18px; }
+    .plate-top { font-size: 11px; }
+    .hint { font-size: 13px; min-height: 0; }
+    .progress span { font-size: 11px; line-height: 16px; }
+    .score { right: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); width: 122px; padding: 8px 10px; }
+    .pts-label { font-size: 10px; }
+    .pts { font-size: 30px; }
+    .pts small { font-size: 13px; }
+    .clock { font-size: 14px; margin-top: 5px; }
+    .clock small { display: none; }
+    .ex-clock { font-size: 12px; }
+    .buttons { display: none; }
+    .toasts { right: 10px; top: auto; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 20px); }
+    .minimap { display: none; }
+    .dash { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); gap: 10px; padding: 6px 10px; }
+    .speed { font-size: 32px; }
+    .tells { max-width: 130px; }
+    .wheel { display: none; }
+  }
+  body:not(.touch) .touch { display: none; }
+  body.touch .buttons, body.touch .minimap, body.touch .gears, body.touch .tells, body.touch .blinkers, body.touch .wheel { display: none; }
+  body.touch .dash { bottom: calc(var(--touch-h, 236px) + 8px); padding: 6px 12px; gap: 10px; }
+  body.touch .toasts { top: auto; bottom: calc(var(--touch-h, 236px) + 72px); right: 10px; width: calc(100vw - 20px); }
+  @media (orientation: landscape) and (max-height: 520px) {
+    body.touch .dash { top: calc(12px + env(safe-area-inset-top, 0px)); bottom: auto; }
+    body.touch .toasts { top: calc(70px + env(safe-area-inset-top, 0px)); bottom: auto; left: 50%; right: auto; transform: translateX(-50%); width: min(340px, 40vw); }
+    .t-row button, .t-gears button { height: 34px; }
+    .t-wheel { height: 64px; }
+    .t-knob { top: 6px; width: 52px; height: 52px; }
+    .t-pedals button { height: 84px; }
+    #t-gas { height: 96px; }
+  }
+  @media (max-width: 760px) {
+    .plate-name { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toast, .limit.over { animation: none; }
+    .flash { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+
+<canvas id="scene" aria-label="Автодром: вид с машины"></canvas>
+<div class="loading" id="loading">Готовим автодром…</div>
+
+<div class="hud" id="hud" hidden>
+  <section class="task panel" aria-live="polite">
+    <div class="plate">
+      <div class="plate-top"><span id="task-no">Упражнение № 1</span><span id="task-step">1 из 6</span></div>
+      <div class="plate-name" id="task-name">Старт</div>
+    </div>
+    <p class="hint" id="hint"></p>
+    <div class="progress" id="progress"></div>
+  </section>
+  <section class="score panel">
+    <div class="pts" id="pts-box"><span id="pts">0</span><small>/100</small></div>
+    <div class="pts-label">штрафных баллов</div>
+    <div class="clock"><span id="clock">00:00</span> <small id="clock-limit">из 10:00</small></div>
+    <div class="ex-clock" id="ex-clock"></div>
+  </section>
+  <div class="buttons">
+    <button class="chip" data-ui="camera" type="button">Вид <kbd>C</kbd></button>
+    <button class="chip" data-ui="sound" type="button" id="btn-sound">Звук <kbd>M</kbd></button>
+    <button class="chip" data-ui="pause" type="button">Пауза <kbd>Esc</kbd></button>
+  </div>
+  <div class="toasts" id="toasts"></div>
+  <div class="flash" id="flash"></div>
+  <section class="dash panel">
+    <div class="speed"><span id="speed">0</span><small>км/ч</small></div>
+    <div class="limit" id="limit" title="На всём автодроме — не больше 20 км/ч">20</div>
+    <div class="gears" id="gears"><span>P</span><span>R</span><span>N</span><span>D</span></div>
+    <div class="blinkers">
+      <svg id="ind-l" viewBox="0 0 24 24" aria-label="Левый указатель"><path d="M2 12 L11 3 V8 H22 V16 H11 V21 Z"/></svg>
+      <svg id="ind-r" viewBox="0 0 24 24" aria-label="Правый указатель"><path d="M22 12 L13 3 V8 H2 V16 H13 V21 Z"/></svg>
+    </div>
+    <div class="tells">
+      <span class="tell" id="tell-belt">Ремень</span>
+      <span class="tell" id="tell-engine">Двигатель</span>
+      <span class="tell" id="tell-hb">Ручник</span>
+    </div>
+    <svg class="wheel" id="wheel" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="16" fill="none" stroke="#eef2f5" stroke-width="4"/>
+      <path d="M4 20 H36 M20 20 V36" stroke="#eef2f5" stroke-width="4"/>
+      <circle cx="20" cy="20" r="4" fill="#f5c400"/>
+      <rect x="18.5" y="2" width="3" height="6" fill="#f5c400"/>
+    </svg>
+  </section>
+  <canvas class="minimap panel" id="minimap" width="460" height="320"></canvas>
+</div>
+
+<div class="touch" id="touch">
+  <div class="t-row">
+    <button type="button" data-a="indL" id="tb-indL" aria-label="Левый указатель">◀</button>
+    <button type="button" data-a="belt" id="tb-belt">Ремень</button>
+    <button type="button" data-a="engine" id="tb-engine">Двиг.</button>
+    <button type="button" data-a="handbrake" id="tb-hb">Ручник</button>
+    <button type="button" data-a="indR" id="tb-indR" aria-label="Правый указатель">▶</button>
+  </div>
+  <div class="t-row">
+    <div class="t-gears" id="tb-gears">
+      <button type="button" data-a="gearP">P</button><button type="button" data-a="gearR">R</button><button type="button" data-a="gearN">N</button><button type="button" data-a="gearD">D</button>
+    </div>
+    <button type="button" data-ui="camera">Вид</button>
+    <button type="button" data-ui="pause" aria-label="Пауза">II</button>
+  </div>
+  <div class="t-main">
+    <div class="t-wheel" id="t-wheel"><div class="t-knob" id="t-knob"></div><span>руль</span></div>
+    <div class="t-pedals">
+      <button type="button" id="t-brake">Тормоз</button>
+      <button type="button" id="t-gas">Газ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen menu" id="menu" hidden>
+  <div class="menu-card">
+    <p class="eyebrow">Тренажёр практического экзамена · категория B · Казахстан</p>
+    <h1>Автодром<span>6 упражнений из 10</span></h1>
+    <p class="lede">Сейчас практический экзамен в Казахстане сдают только на автоматизированном автодроме. Здесь 6 упражнений из 10. Штрафные баллы начисляются по контрольным таблицам приказа МВД РК № 862. Экзамен сдан, если набрано меньше 100 баллов.</p>
+    <div class="modes">
+      <button class="mode primary" type="button" id="btn-exam">Экзамен<small>Как на настоящем: при 100 баллах заезд сразу заканчивается.</small></button>
+      <button class="mode" type="button" id="btn-practice">Тренировка<small>Баллы считаются, но доехать можно до конца. Подсказки те же.</small></button>
+    </div>
+    <details open>
+      <summary>Управление</summary>
+      <dl class="keys" id="keys"></dl>
+    </details>
+    <details>
+      <summary>Упражнения и баллы</summary>
+      <div class="table-wrap"><table id="pen-table"></table></div>
+    </details>
+    <div class="history" id="history" hidden></div>
+    <p class="source" id="source"></p>
+  </div>
+</div>
+
+<div class="screen result" id="result" hidden>
+  <article class="protocol" id="protocol"></article>
+</div>
+
+<div class="screen pause" id="pause" hidden>
+  <div class="pause-card panel">
+    <h2>Пауза</h2>
+    <button class="primary" type="button" data-ui="resume">Продолжить</button>
+    <button type="button" data-ui="restart">Начать заново</button>
+    <button type="button" data-ui="menu">В меню</button>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script>
+(function () {
+'use strict';
+// ---- geom.js
+// Геометрия на плоскости x–z (ось y смотрит вверх).
+// Курс отсчитывается от +x к +z: «вперёд» = (cos θ, sin θ), «вправо» = (−sin θ, cos θ).
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+const approach = (v, target, step) =>
+  v < target ? Math.min(target, v + step) : Math.max(target, v - step);
+
+function wrapAngle(a) {
+  a = (a + Math.PI) % (2 * Math.PI);
+  if (a < 0) a += 2 * Math.PI;
+  return a - Math.PI;
+}
+
+function inRect(r, x, z) {
+  return x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
+}
+
+function inAnyRect(rects, x, z) {
+  for (let i = 0; i < rects.length; i++) if (inRect(rects[i], x, z)) return true;
+  return false;
+}
+
+function rectPoly(r) {
+  return [{ x: r.x0, z: r.z0 }, { x: r.x1, z: r.z0 }, { x: r.x1, z: r.z1 }, { x: r.x0, z: r.z1 }];
+}
+
+// Прямоугольник по центру, курсу и половинам длины/ширины: углы ПЛ, ПП, ЗП, ЗЛ
+function obb(cx, cz, th, hl, hw) {
+  const c = Math.cos(th), s = Math.sin(th);
+  const fx = c * hl, fz = s * hl, rx = -s * hw, rz = c * hw;
+  return [
+    { x: cx + fx - rx, z: cz + fz - rz },
+    { x: cx + fx + rx, z: cz + fz + rz },
+    { x: cx - fx + rx, z: cz - fz + rz },
+    { x: cx - fx - rx, z: cz - fz - rz },
+  ];
+}
+
+function separatedOnAxes(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    const p = a[i], q = a[(i + 1) % a.length];
+    const nx = q.z - p.z, nz = p.x - q.x;
+    let minA = Infinity, maxA = -Infinity, minB = Infinity, maxB = -Infinity;
+    for (const v of a) { const d = v.x * nx + v.z * nz; if (d < minA) minA = d; if (d > maxA) maxA = d; }
+    for (const v of b) { const d = v.x * nx + v.z * nz; if (d < minB) minB = d; if (d > maxB) maxB = d; }
+    if (maxA < minB || maxB < minA) return true;
+  }
+  return false;
+}
+
+// Пересечение выпуклых многоугольников (теорема о разделяющей оси)
+function polysOverlap(a, b) {
+  return !separatedOnAxes(a, b) && !separatedOnAxes(b, a);
+}
+
+function pointInConvex(poly, x, z) {
+  let sign = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i], q = poly[(i + 1) % poly.length];
+    const cr = (q.x - p.x) * (z - p.z) - (q.z - p.z) * (x - p.x);
+    if (cr !== 0) {
+      const s = cr > 0 ? 1 : -1;
+      if (sign === 0) sign = s;
+      else if (s !== sign) return false;
+    }
+  }
+  return true;
+}
+
+function distPointSeg(px, pz, ax, az, bx, bz) {
+  const dx = bx - ax, dz = bz - az;
+  const len2 = dx * dx + dz * dz;
+  const t = len2 ? clamp(((px - ax) * dx + (pz - az) * dz) / len2, 0, 1) : 0;
+  return Math.hypot(ax + dx * t - px, az + dz * t - pz);
+}
+
+function polyCircle(poly, cx, cz, r) {
+  if (pointInConvex(poly, cx, cz)) return true;
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i], q = poly[(i + 1) % poly.length];
+    if (distPointSeg(cx, cz, p.x, p.z, q.x, q.z) <= r) return true;
+  }
+  return false;
+}
+
+// Детерминированный генератор случайных чисел: одинаковый seed — одинаковый заезд
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ---- course.js
+// Автодром-прототип. Метры; x — на восток, z — на юг; движение правостороннее.
+// Нормативы зон взяты из Правил приёма экзаменов (прил. 3 к приказу МВД РК № 862, ред. на 27.07.2026):
+// подъём 8–16 %, линия фиксации 0,3 м через 1 м после начала подъёма, «Стоп» 0,4 м за 1 м до его конца,
+// барьеры по бокам эстакады, «Стоп» перед «зеброй» не ближе 1 м, знак 20 км/ч в 2–10 м после старта.
+// Размеры кармана параллельной парковки в Правилах не указаны — здесь 7,0 × 2,6 м.
+
+const CAR = {
+  length: 4.4, width: 1.8, wheelbase: 2.65, rearOverhang: 0.85, frontOverhang: 0.9,
+  track: 1.55, wheelR: 0.31, maxSteer: 32 * Math.PI / 180,
+};
+
+const SPEED_LIMIT = 20;      // км/ч — общий предел на автодроме (КТ11)
+const TIME_LIMIT = 600;      // с — общее время устанавливает сам автодром; у нас 10 минут
+
+// Полосы между линиями разметки
+const LANES = {
+  west: { x0: -12, x1: 126, z0: -2.25, z1: 2.25 },
+  cross: { x0: 126, x1: 134, z0: -130, z1: 60 },
+};
+
+// Внутри бордюров: разметка 0,15 м и ещё 0,2 м до камня
+const CURB_AREAS = [
+  { x0: -12, x1: 126, z0: -2.6, z1: 2.6 },
+  { x0: 71.5, x1: 79.5, z0: 2.25, z1: 5.2 },
+  { x0: 125.65, x1: 134.35, z0: -130, z1: 60 },
+];
+const insideCurbs = (x, z) => inAnyRect(CURB_AREAS, x, z);
+
+// Упражнение 1 — старт из предстартовой зоны
+const START = { lineX0: 6.0, lineX1: 6.4, signalOffDist: 10, late1: 20, late2: 30 };
+const START_POSE = { x: START.lineX0 - 0.4 - CAR.wheelbase - CAR.frontOverhang, z: 0, heading: 0 };
+
+// Упражнение 2 — крутой подъём и спуск: уклон 12 %
+const RAMP = { x0: 30, x1: 40, x2: 46, x3: 56, h: 1.2, lane: 1.9, wall: 2.3 };
+const HILL = {
+  zoneX0: 22, zoneX1: 60,
+  fixX0: 31.0, fixX1: 31.3,          // линия фиксации
+  stopX0: 38.6, stopX1: 39.0,        // линия «Стоп»
+  rollbackMax: 0.2, standMin: 3, startMax: 30,
+};
+
+function rampHeight(x) {
+  if (x <= RAMP.x0 || x >= RAMP.x3) return 0;
+  if (x < RAMP.x1) return RAMP.h * (x - RAMP.x0) / (RAMP.x1 - RAMP.x0);
+  if (x <= RAMP.x2) return RAMP.h;
+  return RAMP.h * (RAMP.x3 - x) / (RAMP.x3 - RAMP.x2);
+}
+const groundHeight = (x, z) => (Math.abs(z) <= RAMP.wall ? rampHeight(x) : 0);
+
+// Упражнение 6 — параллельная парковка задним ходом, карман справа
+const PARK = {
+  zoneX0: 64, zoneX1: 92,
+  x0: 72, x1: 79, z0: 2.25, z1: 4.85,
+  fix: { x0: 72.3, x1: 78.7, z0: 4.35, z1: 4.65 },   // правые колёса должны стоять на этой линии
+  timeMax: 120,
+};
+const PARK_LINES = [                          // контрольные линии
+  { x0: 71.85, x1: 72.0, z0: 2.25, z1: 5.0 },
+  { x0: 79.0, x1: 79.15, z0: 2.25, z1: 5.0 },
+  { x0: 71.85, x1: 79.15, z0: 4.85, z1: 5.0 },
+];
+
+// Упражнение 3 — пешеходный переход в зоне регулируемого перекрёстка
+const XWALK = {
+  zoneX0: 96, zoneX1: 110, stopX0: 102.6, stopX1: 103.0,
+  x0: 104, x1: 108, pedX: 106, sideZ: 4.8, pedTriggerX: 92,
+  standMin: 3, startMax: 30,
+};
+
+// Упражнение 7 — регулируемый перекрёсток, поворот налево
+const JUNCTION = {
+  zoneX0: 112, stopX0: 123.0, stopX1: 123.4,
+  boxX0: 126, boxX1: 134, center: 130, exitZ: -14,
+  southStop: { x0: 126, x1: 130, z0: -7.05, z1: -6.65 },
+  northStop: { x0: 130, x1: 134, z0: 6.65, z1: 7.05 },
+  slow1: 20, slow2: 30,
+};
+const SOLID_CENTER = [{ z0: -30, z1: -7.05 }, { z0: 7.05, z1: 25 }];   // сплошная 1.1 по x = 130
+
+// Упражнение 10 — финиш на северной ветке
+const FINISH = { zoneZ0: -56, lineZ0: -70.4, lineZ1: -70.0 };
+
+// Препятствия: наезд на любое — 100 баллов
+const WALLS = [
+  { x0: RAMP.x0, x1: RAMP.x3, z0: RAMP.lane, z1: RAMP.wall, kind: 'барьер эстакады' },
+  { x0: RAMP.x0, x1: RAMP.x3, z0: -RAMP.wall, z1: -RAMP.lane, kind: 'барьер эстакады' },
+  { x0: -12.6, x1: -12.0, z0: -2.8, z1: 2.8, kind: 'ограждение' },
+];
+
+// face — куда смотрит лицевая сторона (навстречу тем, кому адресован знак)
+const LIGHTS = [
+  { x: 124.2, z: 3.6, face: [-1, 0], group: 'main' },
+  { x: 135.2, z: -3.4, face: [-1, 0], group: 'main' },
+  { x: 125.2, z: -7.8, face: [0, -1], group: 'cross' },
+  { x: 134.8, z: 7.8, face: [0, 1], group: 'cross' },
+];
+const SIGNS = [
+  { type: '3.24', text: '20', x: 12, z: 3.4, face: [-1, 0] },
+  { type: '6.4', x: 80.2, z: 5.9, face: [-1, 0] },
+  { type: '5.19', x: 104, z: 3.4, face: [-1, 0] },
+  { type: '5.19', x: 108, z: -3.4, face: [-1, 0] },
+  { type: '4.1.3', x: 119, z: 3.4, face: [-1, 0] },
+  { type: '3.24', text: '20', x: 134.9, z: -18, face: [0, 1] },
+];
+const POLES = [
+  ...LIGHTS.map(l => ({ x: l.x, z: l.z, r: 0.12, kind: 'столб светофора' })),
+  ...SIGNS.map(s => ({ x: s.x, z: s.z, r: 0.06, kind: 'стойка знака' })),
+];
+
+// Таблички с названиями упражнений — слева по ходу
+const BOARDS = [
+  { ex: 'start', x: 9, z: -3.9, face: [-1, 0] },
+  { ex: 'hill', x: 23, z: -3.9, face: [-1, 0] },
+  { ex: 'parallel', x: 65, z: -3.9, face: [-1, 0] },
+  { ex: 'crosswalk', x: 97, z: -3.9, face: [-1, 0] },
+  { ex: 'junction', x: 113.4, z: -3.9, face: [-1, 0] },
+  { ex: 'finish', x: 124.6, z: -57, face: [0, 1] },
+];
+
+// Жёлтые пунктиры начала и конца упражнений
+const ZONE_LINES = [
+  { x: HILL.zoneX0 }, { x: HILL.zoneX1 }, { x: PARK.zoneX0 }, { x: PARK.zoneX1 },
+  { x: XWALK.zoneX0 }, { x: XWALK.zoneX1 }, { x: JUNCTION.zoneX0 },
+  { z: JUNCTION.exitZ }, { z: FINISH.zoneZ0 },
+];
+
+// ---- rules.js
+// Штрафные баллы — из приложения 5 к Правилам приёма экзаменов
+// (прил. 3 к приказу МВД РК № 862, ред. на 27.07.2026), контрольные таблицы КТ1–КТ11.
+// 100 баллов и больше — экзамен сразу прекращается (п. 63).
+
+const SOURCE = 'Приказ МВД РК № 862, Правила приёма экзаменов, приложение 5 (контрольные таблицы КТ1–КТ11), ред. на 27.07.2026';
+
+// В прототипе 6 из 10 упражнений; номера — как в п. 66 Правил
+const EXERCISES = [
+  { id: 'start', no: 1, name: 'Старт', short: 'Старт' },
+  { id: 'hill', no: 2, name: 'Крутой подъём и спуск', short: 'Подъём' },
+  { id: 'parallel', no: 6, name: 'Параллельная парковка задним ходом', short: 'Парковка' },
+  { id: 'crosswalk', no: 3, name: 'Пешеходный переход в зоне регулируемого перекрёстка', short: 'Переход' },
+  { id: 'junction', no: 7, name: 'Регулируемый перекрёсток', short: 'Перекрёсток' },
+  { id: 'finish', no: 10, name: 'Финиш', short: 'Финиш' },
+];
+
+const MANEUVER = '6 · Маневрирование';
+
+const PENALTIES = {
+  startLate20: { kt: 'КТ1', pts: 25, text: 'Не тронулись за 20 секунд после команды «Старт»',
+    tip: 'После команды «Старт» есть 20 секунд: D, снять стояночный тормоз, плавно тронуться.' },
+  startLate30: { kt: 'КТ1', pts: 100, text: 'Не тронулись за 30 секунд после команды «Старт»',
+    tip: 'После команды «Старт» есть 20 секунд: D, снять стояночный тормоз, плавно тронуться.' },
+  belt: { kt: 'КТ1', pts: 5, text: 'Не пристегнули ремень безопасности',
+    tip: 'Пристегнитесь до команды «Старт». Ремень — обязанность водителя и по ПДД.', deck: '1 · Обязанности водителя' },
+  startSignal: { kt: 'КТ1', pts: 5, text: 'Пересекли линию «Старт» без левого указателя поворота',
+    tip: 'Левый указатель — это и подтверждение готовности, и сигнал о начале движения.', deck: MANEUVER },
+  startSignalOff: { kt: 'КТ1', pts: 5, text: 'Не выключили левый указатель в пределах 10 м после линии «Старт»',
+    tip: 'Выключите указатель в первые 10 метров после линии «Старт».', deck: MANEUVER },
+
+  hillPos: { kt: 'КТ2', pts: 25, text: 'При остановке задний габарит не пересёк линию фиксации или пересекли линию «Стоп»',
+    tip: 'Задний бампер — за жёлтой линией фиксации, передний — не дальше белой линии «Стоп».' },
+  hillEarly: { kt: 'КТ2', pts: 25, text: 'Тронулись раньше чем через 3 секунды после остановки',
+    tip: 'На подъёме нужно полностью остановиться и постоять не меньше 3 секунд.' },
+  hillLate: { kt: 'КТ2', pts: 25, text: 'Не тронулись в течение 30 секунд после остановки',
+    tip: 'После остановки на подъёме тронуться нужно не позже 30 секунд.' },
+  rollback: { kt: 'КТ2', pts: 20, text: 'Откат назад больше 0,2 м',
+    tip: 'Держите тормоз, пока не нажмёте газ, или трогайтесь со стояночного тормоза.' },
+
+  zebra: { kt: 'КТ3', pts: 25, text: 'Наезд на разметку пешеходного перехода при остановке',
+    tip: 'Останавливайтесь до «зебры» — лучше перед белой линией «Стоп».', deck: '5 · Разметка' },
+  zebraEarly: { kt: 'КТ3', pts: 25, text: 'Тронулись раньше чем через 3 секунды после остановки',
+    tip: 'Перед переходом — полная остановка, не меньше 3 секунд.' },
+  zebraLate: { kt: 'КТ3', pts: 25, text: 'Не тронулись в течение 30 секунд после остановки',
+    tip: 'После остановки перед переходом тронуться нужно не позже 30 секунд.' },
+
+  parkFix: { kt: 'КТ6', pts: 20, text: 'Правые переднее и заднее колёса не на линии фиксации',
+    tip: 'В кармане правые колёса должны стоять на жёлтой линии фиксации у бордюра.' },
+  parkLine: { kt: 'КТ6', pts: 20, text: 'Наезд колесом на контрольную линию',
+    tip: 'Колёса не должны касаться белых линий, которыми размечен карман.' },
+  parkTime: { kt: 'КТ6', pts: 15, text: 'Упражнение заняло больше 2 минут',
+    tip: 'На параллельную парковку даётся 2 минуты от въезда в зону упражнения.' },
+
+  redLight: { kt: 'КТ7', pts: 100, text: 'Пересекли линию «Стоп» на запрещающий сигнал',
+    tip: 'Красный, красный с жёлтым и жёлтый запрещают движение. На жёлтый можно ехать дальше, только если остановиться без экстренного торможения уже нельзя.',
+    deck: '2 · Светофор и регулировщик' },
+  slow20: { kt: 'КТ7', pts: 20, text: 'Проезд перекрёстка на разрешающий сигнал дольше 20 секунд',
+    tip: 'Когда горит зелёный, проезжайте перекрёсток без задержек.' },
+  slow30: { kt: 'КТ7', pts: 100, text: 'Проезд перекрёстка на разрешающий сигнал дольше 30 секунд',
+    tip: 'Когда горит зелёный, проезжайте перекрёсток без задержек.' },
+  turnSignal: { kt: 'КТ7', pts: 5, text: 'Повернули без указателя поворота',
+    tip: 'Левый указатель включают заблаговременно, до начала поворота.', deck: MANEUVER },
+
+  finishSignal: { kt: 'КТ10', pts: 5, text: 'Не включили правый указатель до линии «Финиш»',
+    tip: 'Перед финишной линией включите правый указатель.', deck: MANEUVER },
+
+  timeout: { kt: 'КТ11', pts: 100, text: 'Превышено общее время экзамена',
+    tip: 'Общее время на автодроме ограничено — здесь 10 минут.' },
+  skip: { kt: 'КТ11', pts: 100, text: 'Пропущено упражнение',
+    tip: 'Выполнить нужно каждое упражнение маршрута.' },
+  collision: { kt: 'КТ11', pts: 100, text: 'Столкновение или наезд на препятствие',
+    tip: 'Следите за габаритами: барьеры эстакады, бордюры, машины и пешеходы.' },
+  speed: { kt: 'КТ11', pts: 5, text: 'Превышение 20 км/ч — 5 баллов за каждые 5 секунд',
+    tip: 'На всём автодроме — не быстрее 20 км/ч.', deck: '7 · Скорость' },
+};
+
+// Нарушения ПДД, за которые на автодроме баллов нет, — показываем в протоколе отдельно
+const REMARKS = {
+  pedestrian: { text: 'Не пропустили пешехода на переходе',
+    rule: 'Перед нерегулируемым пешеходным переходом водитель обязан пропустить пешеходов, которые переходят проезжую часть или уже вступили на неё.' },
+  solid: { text: 'Наезд на сплошную линию разметки 1.1',
+    rule: 'Линию 1.1 пересекать запрещено.', deck: '5 · Разметка' },
+  oncoming: { text: 'Выезд на полосу встречного движения',
+    rule: 'На дороге с двусторонним движением держитесь своей полосы.' },
+};
+
+// ---- car.js
+// Машина с автоматической коробкой: кинематическая «велосипедная» модель от задней оси.
+// На скоростях автодрома (до 20 км/ч) шины почти не скользят, поэтому этого достаточно
+// и для змейки, и для парковки. Уклон эстакады считается по высотам осей.
+
+const G = 9.81;
+
+const DRIVE = {
+  accel: 3.0, reverseAccel: 1.8, forwardMax: 30, reverseMax: 3.5,
+  creepAccel: 0.55, creepSpeed: 1.6,     // «ползучесть» АКПП на холостых
+  brake: 7.0, handbrake: 4.5, parkLock: 50, roll: 0.12, drag: 0.0005,
+  steerRate: 1.1,                        // рад/с на колёсах, пока держат клавишу
+  steerRateAbs: 2.4,                     // рад/с, когда руль задают пальцем
+  centerRate: 0.35,                      // руль сам возвращается на ходу
+};
+
+function createCar(pose) {
+  return {
+    x: pose.x, z: pose.z, heading: pose.heading,
+    v: 0, steer: 0, throttle: 0, brake: 0,
+    gear: 'P', engine: false, handbrake: true, belt: false,
+    ind: 0, indTime: 0, indTurn: 0,
+    odo: 0, stillT: 0, y: 0, pitch: 0, wheelSpin: 0,
+  };
+}
+
+function toggleIndicator(car, side) {
+  car.ind = car.ind === side ? 0 : side;
+  car.indTime = 0;
+  car.indTurn = 0;
+}
+
+// Селектор АКПП переключается только почти на месте
+function shiftGear(car, gear) {
+  if (car.gear === gear) return true;
+  if (Math.abs(car.v) > 0.3) return false;
+  car.gear = gear;
+  return true;
+}
+
+// Двигатель запускается только в P или N
+function toggleEngine(car) {
+  if (car.engine) {
+    if (Math.abs(car.v) > 0.3) return false;
+    car.engine = false;
+    return true;
+  }
+  if (car.gear !== 'P' && car.gear !== 'N') return false;
+  car.engine = true;
+  return true;
+}
+
+// inp: { throttle 0..1, brake 0..1, steerDir −1/0/1 (клавиши) или steerAbs −1..1 (палец) }
+function stepCar(car, inp, dt, heightAt) {
+  const maxS = CAR.maxSteer;
+  if (inp.steerAbs != null) car.steer = approach(car.steer, clamp(inp.steerAbs, -1, 1) * maxS, DRIVE.steerRateAbs * dt);
+  else if (inp.steerDir) car.steer = clamp(car.steer + inp.steerDir * DRIVE.steerRate * dt, -maxS, maxS);
+  else car.steer = approach(car.steer, 0, DRIVE.centerRate * Math.min(1, Math.abs(car.v) / 3) * dt);
+
+  car.throttle = inp.throttle || 0;
+  car.brake = inp.brake || 0;
+
+  const L = CAR.wheelbase;
+  const c0 = Math.cos(car.heading), s0 = Math.sin(car.heading);
+  const dh = heightAt(car.x + c0 * L, car.z + s0 * L) - heightAt(car.x, car.z);
+  const sinPitch = dh / Math.hypot(L, dh);
+
+  const dir = !car.engine ? 0 : car.gear === 'D' ? 1 : car.gear === 'R' ? -1 : 0;
+  let aDrive = 0;
+  if (dir) {
+    const along = car.v * dir;
+    const maxA = dir > 0 ? DRIVE.accel : DRIVE.reverseAccel;
+    const vmax = dir > 0 ? DRIVE.forwardMax : DRIVE.reverseMax;
+    const thr = car.throttle * maxA * clamp(1 - along / vmax, 0, 1);
+    const creep = along < DRIVE.creepSpeed ? DRIVE.creepAccel * (1 - Math.max(0, along) / DRIVE.creepSpeed) : 0;
+    aDrive = dir * (thr + creep);
+  }
+  const aNet = aDrive - G * sinPitch;
+  const hold = car.brake * DRIVE.brake + (car.handbrake ? DRIVE.handbrake : 0)
+    + (car.gear === 'P' ? DRIVE.parkLock : 0) + DRIVE.roll + DRIVE.drag * car.v * car.v;
+
+  if (car.v === 0) {
+    if (Math.abs(aNet) > hold) car.v = Math.sign(aNet) * (Math.abs(aNet) - hold) * dt;
+  } else {
+    const nv = car.v + (aNet - Math.sign(car.v) * hold) * dt;
+    // тормоза и сопротивление останавливают машину, но не разгоняют в обратную сторону
+    car.v = Math.sign(nv) !== Math.sign(car.v) && Math.abs(aNet) <= hold ? 0 : nv;
+  }
+
+  const w = car.v / L * Math.tan(car.steer);
+  const h0 = car.heading;
+  const hm = h0 + w * dt / 2;
+  car.x += car.v * Math.cos(hm) * dt;
+  car.z += car.v * Math.sin(hm) * dt;
+  car.heading = wrapAngle(h0 + w * dt);
+  car.odo += Math.abs(car.v) * dt;
+  car.wheelSpin -= car.v * dt / CAR.wheelR;
+  car.stillT = Math.abs(car.v) < 0.02 ? car.stillT + dt : 0;
+
+  // Указатель гаснет сам, когда поворот завершён и руль вернулся, — как в настоящей машине
+  if (car.ind) {
+    car.indTime += dt;
+    car.indTurn += wrapAngle(car.heading - h0) * car.ind;
+    if (car.indTurn > 0.9 && Math.abs(car.steer) < 0.06) { car.ind = 0; car.indTime = 0; car.indTurn = 0; }
+  }
+
+  const c1 = Math.cos(car.heading), s1 = Math.sin(car.heading);
+  const hr = heightAt(car.x, car.z), hf = heightAt(car.x + c1 * L, car.z + s1 * L);
+  car.y = (hr + hf) / 2;
+  car.pitch = Math.atan2(hf - hr, L);
+}
+
+// Габариты, колёса и точки пятен контакта (±0,3 м вдоль, ±0,1 м поперёк) для проверки линий
+function carGeo(car) {
+  const c = Math.cos(car.heading), s = Math.sin(car.heading);
+  const P = (lon, lat) => ({ x: car.x + c * lon - s * lat, z: car.z + s * lon + c * lat });
+  const L = CAR.wheelbase, fo = L + CAR.frontOverhang, ro = -CAR.rearOverhang;
+  const hw = CAR.width / 2, ht = CAR.track / 2;
+  const wheelPos = [[L, -ht], [L, ht], [0, ht], [0, -ht]];          // ПЛ, ПП, ЗП, ЗЛ
+  return {
+    corners: [P(fo, -hw), P(fo, hw), P(ro, hw), P(ro, -hw)],
+    wheels: wheelPos.map(([lon, lat]) => P(lon, lat)),
+    patches: wheelPos.map(([lon, lat]) => [P(lon + 0.3, lat), P(lon - 0.3, lat), P(lon, lat + 0.1), P(lon, lat - 0.1)]),
+    front: P(fo, 0),
+    rear: P(ro, 0),
+    center: P((fo + ro) / 2, 0),
+  };
+}
+
+// ---- actors.js
+// Светофор, пешеход и машина на поперечной улице.
+
+// ---------------------------------------------------------------- светофор
+// Фазы для нашего подхода (с запада). Поперечная улица получает зелёный внутри нашего красного.
+const LIGHT_DUR = { G: 10, Gb: 3, Y: 3, R: 16, RY: 2 };
+const NEXT_PHASE = { G: 'Gb', Gb: 'Y', Y: 'R', R: 'RY', RY: 'G' };
+
+function createLight(rng) {
+  const phase = rng() < 0.5 ? 'G' : 'R';
+  return { phase, t: LIGHT_DUR[phase] * (0.3 + 0.7 * rng()), durR: LIGHT_DUR.R, clock: 0 };
+}
+
+function stepLight(L, dt) {
+  L.clock += dt;
+  L.t -= dt;
+  while (L.t <= 0) {
+    L.phase = NEXT_PHASE[L.phase];
+    L.t += LIGHT_DUR[L.phase];
+    if (L.phase === 'R') L.durR = LIGHT_DUR.R;
+  }
+}
+
+function crossPhase(L) {
+  if (L.phase !== 'R') return 'R';
+  const e = L.durR - L.t, end = L.durR - 1;
+  if (e < 1.5) return 'R';
+  if (e < end - 6) return 'G';
+  if (e < end - 3) return 'Gb';
+  if (e < end) return 'Y';
+  return 'R';
+}
+
+// Какие секции горят: мигающий зелёный — 2 раза в секунду
+function lamps(phase, clock) {
+  const blink = clock % 0.5 < 0.25;
+  return {
+    r: phase === 'R' || phase === 'RY',
+    y: phase === 'Y' || phase === 'RY',
+    g: phase === 'G' || (phase === 'Gb' && blink),
+  };
+}
+
+// На подъезде к перекрёстку чаще всего загорается жёлтый, реже — остаётся зелёный.
+// scenario: 'red' | 'green' — детерминированно для тестов
+function forceApproach(L, rng, scenario) {
+  if (scenario === 'green') { L.phase = 'G'; L.t = 30; return; }
+  if (scenario === 'red') {
+    if (L.phase !== 'R') { L.phase = 'Y'; L.t = LIGHT_DUR.Y; }
+    else L.t = Math.max(L.t, 8);
+    return;
+  }
+  if (L.phase === 'G') {
+    if (rng() < 0.65) { L.phase = 'Gb'; L.t = 1.5; }
+    else L.t = Math.max(L.t, 12);
+  }
+}
+
+// ---------------------------------------------------------------- пешеход
+function createPed() {
+  return { state: 'idle', visible: false, x: XWALK.pedX, z: XWALK.sideZ, dir: -1, speed: 1.3, walk: 0, blocked: false };
+}
+
+// Ставит пешехода на тротуар с одной из сторон; переходить он начнёт по команде экзамена
+function placePed(p, rng) {
+  const fromSouth = rng() < 0.6;
+  p.dir = fromSouth ? -1 : 1;
+  p.z = fromSouth ? XWALK.sideZ : -XWALK.sideZ;
+  p.visible = true;
+}
+
+// На проезжей части или вот-вот шагнёт на неё
+const pedOnRoad = p => p.state === 'walk' && Math.abs(p.z) < 2.85;
+
+// Пешеход ещё не ушёл за дальний край дороги
+const pedCrossing = p => p.state === 'walk' && (Math.sign(p.z) !== p.dir || Math.abs(p.z) < 2.85);
+
+function stepPed(p, dt, carPoly) {
+  if (p.state !== 'walk') return;
+  // в стоящую на переходе машину пешеход не пойдёт — подождёт
+  const ahead = { x0: p.x - 0.35, x1: p.x + 0.35, z0: Math.min(p.z, p.z + p.dir * 0.9), z1: Math.max(p.z, p.z + p.dir * 0.9) };
+  p.blocked = !!carPoly && polysOverlap(rectPoly(ahead), carPoly);
+  if (p.blocked) return;
+  p.z += p.dir * p.speed * dt;
+  p.walk += dt * p.speed * 4.2;
+  if (Math.sign(p.z) === p.dir && Math.abs(p.z) > XWALK.sideZ + 0.6) p.state = 'done';
+}
+
+// ---------------------------------------------------------------- машина на поперечной улице
+// Едет на юг по своей полосе, слушается своего светофора и не наезжает на игрока.
+function createNpc(rng) {
+  return { x: 128, z: -125 + 20 * rng(), heading: Math.PI / 2, v: 7, wait: 0, spin: 0 };
+}
+
+const npcPoly = n => obb(n.x, n.z, n.heading, CAR.length / 2, CAR.width / 2);
+
+function stepNpc(n, dt, phase, playerPoly, rng) {
+  if (n.wait > 0) { n.wait -= dt; return; }
+  const front = n.z + CAR.length / 2;
+  let vT = 7;
+  const dStop = JUNCTION.southStop.z0 - 0.2 - front;
+  if (phase !== 'G' && phase !== 'Gb' && dStop > -0.5) {
+    const canStop = dStop > n.v * n.v / 8;
+    if (phase !== 'Y' || canStop) vT = Math.min(vT, Math.sqrt(Math.max(0, 5 * (dStop - 0.1))));
+  }
+  const look = Math.max(5, n.v * 1.6 + 4);
+  const corridor = rectPoly({ x0: 126.3, x1: 129.7, z0: front, z1: front + look });
+  if (playerPoly && polysOverlap(corridor, playerPoly)) vT = 0;
+  n.v = approach(n.v, vT, (vT > n.v ? 2 : 6) * dt);
+  n.z += n.v * dt;
+  n.spin -= n.v * dt / CAR.wheelR;
+  if (n.z > 64) { n.z = -128; n.v = 7; n.wait = 2 + 6 * rng(); }
+}
+
+// ---- exam.js
+// Экзамен: упражнения по порядку маршрута, общие требования КТ11 и замечания по ПДД.
+// Модуль не знает про отрисовку, поэтому его целиком проверяют тесты с автопилотом.
+
+// Можно ли остановиться до линии без экстренного торможения (не резче 3,5 м/с²)
+const canStopBefore = (d, v) => v < 0.5 || d > (v * v) / 7 + 0.3;
+
+const PHASE_NAME = { R: 'красный', RY: 'красный с жёлтым', Y: 'жёлтый', G: 'зелёный', Gb: 'зелёный мигающий' };
+const fmtS = s => s.toFixed(1).replace('.', ',') + ' с';
+const fmtM = m => m.toFixed(2).replace('.', ',') + ' м';
+
+// light: 'random' | 'red' | 'green'; ped: 'random' | 'yes' | 'no'
+function createExam({ practice = false, light = 'random', ped = 'random' } = {}) {
+  return {
+    practice, light, ped,
+    phase: 'prep',          // prep → run → end
+    t: 0,                   // время с команды «Старт»
+    idx: 0, active: false,
+    ex: EXERCISES.map(e => ({ id: e.id, status: 'pending', t0: null, t1: null, s: {} })),
+    points: 0, log: [], remarks: [], events: [],
+    result: null,
+    g: { over: false, overT: 0, overNext: 0, underT: 0, hitOn: false, hitClear: 0, solidOn: false, solidClear: 0 },
+  };
+}
+
+// ---------------------------------------------------------------- журнал
+function penal(E, code, note = '') {
+  const p = PENALTIES[code];
+  const entry = { code, pts: p.pts, note, t: E.t, ex: E.ex[E.idx].id };
+  E.points += p.pts;
+  E.log.push(entry);
+  E.events.push({ type: 'penalty', ...entry });
+  if (E.points >= 100 && !E.practice) finishExam(E, 'fail');
+}
+
+function remark(E, code) {
+  const ex = E.ex[E.idx].id;
+  if (E.remarks.some(r => r.code === code && r.ex === ex)) return;
+  const entry = { code, t: E.t, ex };
+  E.remarks.push(entry);
+  E.events.push({ type: 'remark', ...entry });
+}
+
+function activate(E) {
+  const x = E.ex[E.idx];
+  x.status = 'active';
+  x.t0 = E.t;
+  E.active = true;
+  E.events.push({ type: 'exercise', id: x.id });
+}
+
+function close(E, status) {
+  const x = E.ex[E.idx];
+  x.status = status;
+  x.t1 = E.t;
+  E.active = false;
+  E.events.push({ type: status, id: x.id });
+  if (E.idx < E.ex.length - 1) E.idx++;
+}
+
+const done = E => close(E, 'done');
+function skip(E, note) { penal(E, 'skip', note); close(E, 'skipped'); }
+
+function finishExam(E, result) {
+  if (E.phase === 'end') return;
+  E.phase = 'end';
+  E.result = result;
+  E.events.push({ type: 'end', result });
+}
+
+// ---------------------------------------------------------------- упражнения
+const ENTER = {
+  start: () => true,
+  hill: g => g.front.x > HILL.zoneX0,
+  parallel: g => g.front.x > PARK.zoneX0,
+  crosswalk: g => g.front.x > XWALK.zoneX0,
+  junction: g => g.front.x > JUNCTION.zoneX0,
+  finish: g => g.front.z < FINISH.zoneZ0 && g.front.x > JUNCTION.boxX0,
+};
+
+// Общая схема «стоп — постоять 3 с — тронуться за 30 с» для подъёма и перехода
+function standAndGo(E, s, car, rules, codes) {
+  if (s.moveT == null && car.v > 0.02) s.moveT = E.t;
+  if (car.x > s.stopX + 0.5) {
+    s.started = true;
+    const stood = s.moveT - s.stopT;
+    if (stood < rules.standMin) penal(E, codes.early, 'стояли ' + fmtS(stood));
+  } else if (E.t - s.stopT > rules.startMax && !s.late) {
+    s.late = true;
+    penal(E, codes.late);
+  }
+}
+
+const STEP_EX = {
+  start(E, s, w, g) {
+    const car = w.car;
+    if (!s.moved && car.odo > 0.2) s.moved = true;
+    if (!s.moved) {
+      if (E.t > START.late1 && !s.late1) { s.late1 = true; penal(E, 'startLate20'); }
+      if (E.t > START.late2 && !s.late2) { s.late2 = true; penal(E, 'startLate30'); }
+    }
+    if (!s.crossed && g.front.x > START.lineX0) {
+      s.crossed = true;
+      if (!car.belt) penal(E, 'belt');
+      if (car.ind !== -1) penal(E, 'startSignal');
+    }
+    if (s.crossed && !s.offChecked) {
+      if (car.ind !== -1) s.offChecked = true;
+      else if (g.front.x > START.lineX1 + START.signalOffDist) { s.offChecked = true; penal(E, 'startSignalOff'); }
+    }
+    if (s.offChecked) done(E);
+  },
+
+  hill(E, s, w, g) {
+    const car = w.car, fx = g.front.x, rx = g.rear.x;
+    if (!s.stopped) {
+      const onAscent = fx > HILL.fixX1 && rx < RAMP.x1;
+      if (onAscent && car.stillT >= 0.25 && car.gear !== 'R') {
+        s.stopped = true;
+        s.stopT = E.t - car.stillT;
+        s.stopX = car.x;
+        s.maxBack = 0;
+        if (rx < HILL.fixX1) penal(E, 'hillPos', 'задний бампер не пересёк линию фиксации');
+        else if (fx > HILL.stopX1) penal(E, 'hillPos', 'передний бампер за линией «Стоп»');
+      } else if (rx >= RAMP.x1) {
+        s.stopped = s.started = true;
+        penal(E, 'hillPos', 'проехали подъём без остановки');
+        penal(E, 'hillEarly', 'остановки не было');
+      }
+    } else if (!s.started) {
+      const back = s.stopX - car.x;
+      if (back > s.maxBack) s.maxBack = back;
+      // штраф — когда машина перестала катиться назад, с фактической величиной отката
+      if (s.maxBack > HILL.rollbackMax && !s.rolled && car.v > -0.02) { s.rolled = true; penal(E, 'rollback', 'откат ' + fmtM(s.maxBack)); }
+      standAndGo(E, s, car, HILL, { early: 'hillEarly', late: 'hillLate' });
+    }
+    if (rx > HILL.zoneX1) done(E);
+  },
+
+  parallel(E, s, w, g, dt) {
+    const car = w.car;
+    const touch = g.patches.some(pp => pp.some(p => PARK_LINES.some(r => inRect(r, p.x, p.z))));
+    if (touch) {
+      if (!s.lineOn) { s.lineOn = true; penal(E, 'parkLine'); }
+      s.lineOff = 0;
+    } else if (s.lineOn && (s.lineOff = (s.lineOff || 0) + dt) > 0.8) s.lineOn = false;
+
+    const inPocket = p => p.x > PARK.x0 && p.x < PARK.x1 && p.z > PARK.z0 && p.z < PARK.z1;
+    if (!s.entered && g.wheels.some(inPocket)) s.entered = true;
+    const allIn = g.wheels.every(inPocket);
+    if (allIn && car.stillT >= 0.5) {
+      const onFix = i => g.patches[i].some(p => inRect(PARK.fix, p.x, p.z));
+      s.parked = true;
+      s.fixOk = onFix(1) && onFix(2);
+    }
+    if (s.parked && !allIn && car.gear === 'D' && !s.judged) {
+      s.judged = true;
+      if (!s.fixOk) penal(E, 'parkFix');
+    }
+    if (!s.slow && E.t - E.ex[E.idx].t0 > PARK.timeMax) { s.slow = true; penal(E, 'parkTime'); }
+    if (g.front.x > PARK.zoneX1) {
+      if (!s.entered) { skip(E, 'в карман не заезжали'); return; }
+      if (!s.judged) {
+        s.judged = true;
+        if (!s.parked || !s.fixOk) penal(E, 'parkFix', s.parked ? '' : 'машина не встала в карман целиком');
+      }
+      done(E);
+    }
+  },
+
+  crosswalk(E, s, w, g) {
+    const car = w.car, fx = g.front.x;
+    // Пешеход ждёт у края и выходит, когда машина остановилась (или уже проехала переход)
+    if (!s.pedChecked) {
+      s.pedChecked = true;
+      s.pedGo = E.ped === 'yes' || (E.ped === 'random' && w.rng() < 0.6);
+      if (s.pedGo) placePed(w.ped, w.rng);
+    }
+    if (s.pedGo && w.ped.state === 'idle' && ((s.stopped && !s.started && E.t - s.stopT > 0.8) || g.rear.x > XWALK.x1)) {
+      w.ped.state = 'walk';
+    }
+    if (!s.stopped) {
+      if (car.stillT >= 0.25 && fx < XWALK.x1) {
+        s.stopped = true;
+        s.stopT = E.t - car.stillT;
+        s.stopX = car.x;
+        if (fx > XWALK.x0) penal(E, 'zebra');
+      } else if (fx > XWALK.x0 + 0.3) {
+        s.stopped = s.started = true;
+        penal(E, 'zebraEarly', 'не остановились перед переходом');
+      }
+    } else if (!s.started) {
+      standAndGo(E, s, car, XWALK, { early: 'zebraEarly', late: 'zebraLate' });
+    }
+    if (fx > XWALK.x0 && fx < XWALK.x1 + 1 && car.v > 0.1 && pedOnRoad(w.ped)) remark(E, 'pedestrian');
+    if (g.rear.x > XWALK.zoneX1) done(E);
+  },
+
+  junction(E, s, w, g, dt) {
+    const car = w.car, L = w.light, fx = g.front.x;
+    if (!s.forced) { s.forced = true; s.greenT = 0; forceApproach(L, w.rng, E.light); }
+    if (L.phase === 'Y' && s.lastPhase !== 'Y') {
+      s.yellowGo = fx > JUNCTION.stopX0 || !canStopBefore(JUNCTION.stopX0 - fx, Math.max(0, car.v));
+    }
+    s.lastPhase = L.phase;
+    const permissive = L.phase === 'G' || L.phase === 'Gb' || (L.phase === 'Y' && s.yellowGo);
+    s.permissive = permissive;
+    if (!s.crossed && fx > JUNCTION.stopX1) {
+      s.crossed = true;
+      if (!permissive) penal(E, 'redLight', 'горел ' + PHASE_NAME[L.phase]);
+    }
+    if (!s.cleared) {
+      if (permissive) s.greenT += dt;
+      if (s.greenT > JUNCTION.slow1 && !s.slow1) { s.slow1 = true; penal(E, 'slow20'); }
+      if (s.greenT > JUNCTION.slow2 && !s.slow2) { s.slow2 = true; penal(E, 'slow30'); }
+      if (g.rear.z < -2.6) s.cleared = true;
+    }
+    if (!s.inBox && fx > JUNCTION.boxX0) {
+      s.inBox = true;
+      if (car.ind !== -1) penal(E, 'turnSignal');
+    }
+    if (g.front.z > 9 && g.front.x > JUNCTION.boxX0) { skip(E, 'по маршруту нужно было повернуть налево'); return; }
+    if (g.rear.z < JUNCTION.exitZ) done(E);
+  },
+
+  finish(E, s, w, g) {
+    if (g.front.z < FINISH.lineZ1) {
+      if (w.car.ind !== 1) penal(E, 'finishSignal');
+      done(E);
+      const skipped = E.ex.some(x => x.status === 'skipped');
+      finishExam(E, E.points < 100 && !skipped ? 'pass' : 'fail');
+    }
+  },
+};
+
+// ---------------------------------------------------------------- общие требования (КТ11) и ПДД
+function globalRules(E, w, g, dt) {
+  const car = w.car, G = E.g;
+  if (!G.timeout && E.t > TIME_LIMIT) { G.timeout = true; penal(E, 'timeout'); }
+
+  // 5 баллов при превышении и ещё по 5 за каждые следующие 5 секунд
+  const kmh = Math.abs(car.v) * 3.6;
+  if (kmh >= SPEED_LIMIT + 0.5) {
+    G.underT = 0;
+    if (!G.over) { G.over = true; G.overT = 0; G.overNext = 0; }
+    G.overT += dt;
+    if (G.overT >= G.overNext) { penal(E, 'speed', Math.round(kmh) + ' км/ч'); G.overNext += 5; }
+  } else if (G.over && kmh < SPEED_LIMIT - 0.5 && (G.underT += dt) > 1) G.over = false;
+
+  let hit = null;
+  if (g.patches.some(pp => pp.some(p => !insideCurbs(p.x, p.z)))) hit = 'бордюр';
+  const body = g.corners;
+  for (const r of WALLS) if (polysOverlap(body, rectPoly(r))) hit = r.kind;
+  for (const p of POLES) if (polyCircle(body, p.x, p.z, p.r)) hit = p.kind;
+  if (polysOverlap(body, npcPoly(w.npc))) hit = 'автомобиль';
+  if (w.ped.state === 'walk' && Math.abs(car.v) > 0.05 && polyCircle(body, w.ped.x, w.ped.z, 0.3)) hit = 'пешеход';
+  if (hit) {
+    if (!G.hitOn) { G.hitOn = true; penal(E, 'collision', hit); }
+    G.hitClear = 0;
+  } else if (G.hitOn && (G.hitClear += dt) > 1.5) G.hitOn = false;
+
+  const onSolid = g.patches.some(pp => pp.some(p =>
+    Math.abs(p.x - JUNCTION.center) < 0.075 && SOLID_CENTER.some(r => p.z >= r.z0 && p.z <= r.z1)));
+  if (onSolid) {
+    if (!G.solidOn) { G.solidOn = true; remark(E, 'solid'); }
+    G.solidClear = 0;
+  } else if (G.solidOn && (G.solidClear += dt) > 1.5) G.solidOn = false;
+
+  const northbound = Math.cos(car.heading + Math.PI / 2) > 0.7;
+  if (northbound && g.center.z < -2.6 && g.center.x < JUNCTION.center && g.center.x > JUNCTION.boxX0 - 1) remark(E, 'oncoming');
+  return hit;
+}
+
+// Возвращает название препятствия, если машина во что-то упёрлась
+function stepExam(E, w, g, dt) {
+  if (E.phase === 'end') return null;
+  const car = w.car;
+  if (E.phase === 'prep') {
+    const ready = car.engine && car.ind === -1 && car.indTime >= 0.6;
+    if (!ready && car.odo < 0.3) return null;
+    E.phase = 'run';
+    E.t = 0;
+    E.events.push({ type: 'command' });
+    activate(E);
+  }
+  E.t += dt;
+  const hit = globalRules(E, w, g, dt);
+  if (E.phase === 'end') return hit;
+  const cur = E.ex[E.idx];
+  if (!E.active && cur.status === 'pending' && ENTER[cur.id](g)) activate(E);
+  if (E.active) STEP_EX[cur.id](E, cur.s, w, g, dt);
+  return hit;
+}
+
+// ---------------------------------------------------------------- подсказка на экране
+// Токены в квадратных скобках интерфейс заменяет на клавиши или кнопки
+function examHint(E, w) {
+  const car = w.car;
+  if (E.phase === 'end') return E.result === 'pass' ? 'Экзамен сдан' : 'Экзамен не сдан';
+  if (E.phase === 'prep') {
+    if (!car.belt) return 'Пристегните ремень [belt]';
+    if (!car.engine) return car.gear === 'P' || car.gear === 'N' ? 'Запустите двигатель [engine]' : 'Селектор в P [gearP], затем двигатель [engine]';
+    if (car.ind !== -1) return 'Подтвердите готовность левым указателем [indL]';
+    return 'Ждите команды «Старт»';
+  }
+  const x = E.ex[E.idx], s = x.s;
+  if (!E.active) return 'Дальше: ' + EXERCISES[E.idx].name;
+  const stood = s.stopped && !s.started ? E.t - s.stopT : 0;
+  switch (x.id) {
+    case 'start':
+      if (!s.moved) {
+        if (car.gear !== 'D') return 'Команда «Старт»! Селектор в D [gearD]';
+        if (car.handbrake) return 'Снимите стояночный тормоз [handbrake]';
+        return 'Трогайтесь [gas] — не позже 20 секунд';
+      }
+      if (s.crossed && car.ind === -1) return 'Выключите левый указатель [indL] в пределах 10 м';
+      return 'Пересеките линию «Старт» с левым указателем';
+    case 'hill':
+      if (!s.stopped) return 'Остановитесь на подъёме: задний бампер за жёлтой линией фиксации, передний — до белой «Стоп»';
+      if (!s.started) return stood < HILL.standMin ? 'Стойте ещё ' + fmtS(HILL.standMin - stood) : 'Трогайтесь без отката: сразу газ [gas] или со стояночного тормоза [handbrake]';
+      return 'Спускайтесь не быстрее 20 км/ч';
+    case 'parallel':
+      if (!s.entered) return 'Проедьте карман справа, остановитесь и включите задний ход [gearR]';
+      if (!s.judged) return s.parked
+        ? 'Машина в кармане. Селектор в D [gearD] и выезжайте'
+        : 'Задним ходом в карман: правые колёса — на жёлтую линию. Вид сверху — [camera]';
+      return 'Езжайте к переходу';
+    case 'crosswalk':
+      if (!s.stopped) return 'Остановитесь перед переходом, не заезжая на «зебру»';
+      if (!s.started && stood < XWALK.standMin) return 'Стойте ещё ' + fmtS(XWALK.standMin - stood);
+      if (pedCrossing(w.ped) && car.x < XWALK.x0) return 'Пропустите пешехода';
+      return 'Проезжайте переход';
+    case 'junction':
+      if (!s.crossed && !s.permissive) return 'Запрещающий сигнал — остановитесь перед линией «Стоп»';
+      if (car.ind !== -1 && !s.inBox) return 'Поворот налево: включите левый указатель [indL]';
+      return 'Поворачивайте налево — на зелёный не дольше 20 секунд';
+    case 'finish':
+      return car.ind !== 1 ? 'Включите правый указатель [indR] до линии «Финиш»' : 'Пересеките линию «Финиш»';
+  }
+  return '';
+}
+
+// ---- sim.js
+// Мир целиком: машина, светофор, пешеход, попутная машина и экзамен. Шаг фиксированный.
+
+const STEP = 1 / 120;
+
+function createWorld({ seed = Date.now() >>> 0, practice = false, light = 'random', ped = 'random' } = {}) {
+  const rng = mulberry32(seed);
+  return {
+    seed, rng,
+    car: createCar(START_POSE),
+    light: createLight(rng),
+    ped: createPed(),
+    npc: createNpc(rng),
+    exam: createExam({ practice, light, ped }),
+    time: 0,
+    notices: [],
+    lastHit: null,
+  };
+}
+
+function applyAction(w, a) {
+  const car = w.car;
+  switch (a) {
+    case 'belt': car.belt = !car.belt; return true;
+    case 'handbrake': car.handbrake = !car.handbrake; return true;
+    case 'indL': toggleIndicator(car, -1); return true;
+    case 'indR': toggleIndicator(car, 1); return true;
+    case 'engine':
+      if (toggleEngine(car)) return true;
+      w.notices.push(car.engine ? 'Сначала остановитесь' : 'Двигатель запускается только в P или N');
+      return false;
+    case 'gearP': case 'gearR': case 'gearN': case 'gearD':
+      if (shiftGear(car, a.slice(4))) return true;
+      w.notices.push('Селектор переключают только на месте');
+      return false;
+  }
+  return false;
+}
+
+// inp: { throttle, brake, steerDir | steerAbs, actions: [...] }
+function stepWorld(w, inp, dt = STEP) {
+  if (inp.actions) for (const a of inp.actions) applyAction(w, a);
+  const car = w.car;
+  const prev = { x: car.x, z: car.z, heading: car.heading };
+  stepLight(w.light, dt);
+  stepCar(car, inp, dt, groundHeight);
+  const geo = carGeo(car);
+  stepPed(w.ped, dt, geo.corners);
+  stepNpc(w.npc, dt, crossPhase(w.light), geo.corners, w.rng);
+  const hit = stepExam(w.exam, w, geo, dt);
+  // упёрлись — машина останавливается на месте, сквозь препятствия не проезжает
+  if (hit) { car.x = prev.x; car.z = prev.z; car.heading = prev.heading; car.v = 0; }
+  w.lastHit = hit;
+  w.time += dt;
+  return geo;
+}
+
+// ---- view.js
+// Отрисовка на Three.js r128 (глобальный THREE из UMD-сборки). Вся графика процедурная.
+
+const T = () => window.THREE;
+const RAMP_KINKS = [RAMP.x0, RAMP.x1, RAMP.x2, RAMP.x3];
+
+// ---------------------------------------------------------------- текстуры
+function canvasTex(w, h, draw, repeat) {
+  const THREE = T();
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.encoding = THREE.sRGBEncoding;
+  if (repeat) tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function speckle(ctx, w, h, base, dots, n, maxR = 1.6) {
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < n; i++) {
+    ctx.globalAlpha = 0.25 + Math.random() * 0.5;
+    ctx.fillStyle = dots[(Math.random() * dots.length) | 0];
+    const r = 0.5 + Math.random() * maxR;
+    ctx.fillRect(Math.random() * w, Math.random() * h, r, r);
+  }
+  ctx.globalAlpha = 1;
+}
+
+const asphaltTex = () => canvasTex(512, 512, (ctx, w, h) => {
+  speckle(ctx, w, h, '#4a4f55', ['#5d636a', '#3b4045', '#6c727a', '#42474d'], 16000);
+  for (let i = 0; i < 6; i++) {
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = i % 2 ? '#2f3438' : '#5a6066';
+    ctx.fillRect(Math.random() * w, Math.random() * h, 60 + Math.random() * 140, 30 + Math.random() * 90);
+  }
+  ctx.globalAlpha = 1;
+}, true);
+
+const steppeTex = () => canvasTex(512, 512, (ctx, w, h) => {
+  speckle(ctx, w, h, '#9a9c68', ['#8a9159', '#aeaa76', '#b8ab7c', '#7d8751', '#a3a36c'], 26000, 2.6);
+  for (let i = 0; i < 40; i++) {
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = i % 3 ? '#8b9258' : '#bcae80';
+    ctx.beginPath();
+    ctx.arc(Math.random() * w, Math.random() * h, 12 + Math.random() * 40, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}, true);
+
+const concreteTex = () => canvasTex(256, 256, (ctx, w, h) => {
+  speckle(ctx, w, h, '#a4a7a6', ['#b3b6b4', '#949896', '#bcbfbd'], 5000);
+}, true);
+
+const barrierTex = () => canvasTex(256, 128, (ctx, w, h) => {
+  ctx.fillStyle = '#f2f2ee';
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#c8261b';
+  for (let x = -h; x < w + h; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, h); ctx.lineTo(x + 32, h); ctx.lineTo(x + 32 + h, 0); ctx.lineTo(x + h, 0);
+    ctx.fill();
+  }
+}, true);
+
+// Знаки: лицевая сторона и серая изнанка той же формы
+function signFace(type, text) {
+  return canvasTex(256, 256, (ctx, w) => {
+    const c = w / 2;
+    const blueSquare = () => { ctx.fillStyle = '#ffffff'; roundRect(ctx, 4, 4, 248, 248, 16); ctx.fill(); ctx.fillStyle = '#0d4a9e'; roundRect(ctx, 12, 12, 232, 232, 12); ctx.fill(); };
+    if (type === '3.24') {
+      ctx.fillStyle = '#ffffff'; circle(ctx, c, c, 124); ctx.fill();
+      ctx.fillStyle = '#d32011'; circle(ctx, c, c, 118); ctx.fill();
+      ctx.fillStyle = '#ffffff'; circle(ctx, c, c, 92); ctx.fill();
+      ctx.fillStyle = '#1a1a1a'; ctx.font = '700 104px "Fira Sans Extra Condensed", Arial, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, c, c + 6);
+    } else if (type === '4.1.3') {
+      ctx.fillStyle = '#ffffff'; circle(ctx, c, c, 124); ctx.fill();
+      ctx.fillStyle = '#0d4a9e'; circle(ctx, c, c, 118); ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 30; ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(150, 205); ctx.lineTo(150, 118); ctx.quadraticCurveTo(150, 96, 128, 96); ctx.lineTo(100, 96); ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(52, 96); ctx.lineTo(106, 52); ctx.lineTo(106, 140); ctx.closePath(); ctx.fill();
+    } else if (type === '5.19') {
+      blueSquare();
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(c, 34); ctx.lineTo(226, 214); ctx.lineTo(30, 214); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#1a1a1a';
+      for (let i = 0; i < 5; i++) ctx.fillRect(74 + i * 24, 186, 12, 20);
+      circle(ctx, 134, 96, 12); ctx.fill();
+      ctx.lineWidth = 13; ctx.lineCap = 'round'; ctx.strokeStyle = '#1a1a1a';
+      ctx.beginPath(); ctx.moveTo(130, 112); ctx.lineTo(122, 150); ctx.lineTo(104, 178); ctx.moveTo(122, 150); ctx.lineTo(142, 178); ctx.moveTo(128, 122); ctx.lineTo(106, 138); ctx.moveTo(130, 122); ctx.lineTo(152, 136); ctx.stroke();
+    } else if (type === '6.4') {
+      blueSquare();
+      ctx.fillStyle = '#ffffff'; ctx.font = '700 176px "Fira Sans Extra Condensed", Arial, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('P', c, c + 10);
+    }
+  });
+}
+
+function signBack(type) {
+  return canvasTex(128, 128, ctx => {
+    ctx.fillStyle = '#8c9298';
+    if (type === '3.24' || type === '4.1.3') { circle(ctx, 64, 64, 62); ctx.fill(); } else { roundRect(ctx, 2, 2, 124, 124, 8); ctx.fill(); }
+  });
+}
+
+function circle(ctx, x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); }
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function boardTex(no, name) {
+  return canvasTex(512, 256, (ctx, w, h) => {
+    ctx.fillStyle = '#ffffff'; roundRect(ctx, 0, 0, w, h, 18); ctx.fill();
+    ctx.fillStyle = '#0d4a9e'; roundRect(ctx, 8, 8, w - 16, h - 16, 12); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+    ctx.font = '700 44px "Fira Sans Extra Condensed", Arial, sans-serif';
+    ctx.fillText('УПРАЖНЕНИЕ № ' + no, w / 2, 72);
+    ctx.font = '800 ' + (name.length > 14 ? 58 : 76) + 'px "Fira Sans Extra Condensed", Arial, sans-serif';
+    ctx.fillText(name.toUpperCase(), w / 2, 170);
+  });
+}
+
+// Надписи и стрелка на асфальте: белое на прозрачном
+function paintTex(w, h, draw) {
+  return canvasTex(w, h, ctx => { ctx.fillStyle = '#f4f4f0'; ctx.strokeStyle = '#f4f4f0'; draw(ctx); });
+}
+
+const glowTex = () => canvasTex(128, 128, ctx => {
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+});
+
+// ---------------------------------------------------------------- геометрия
+function flatQuad(x0, z0, x1, z1, y, uvScale) {
+  const THREE = T();
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1], 3));
+  const u = v => v / uvScale;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([u(x0), u(-z0), u(x1), u(-z0), u(x1), u(-z1), u(x0), u(-z1)], 2));
+  g.setIndex([0, 2, 1, 0, 3, 2]);
+  g.computeVertexNormals();
+  return g;
+}
+
+// Прямоугольники разметки одним мешем; на эстакаде ложатся по профилю
+function markingGeo(rects, lift) {
+  const THREE = T();
+  const pos = [], idx = [];
+  for (const r of rects) {
+    const xs = [r.x0, ...RAMP_KINKS.filter(k => k > r.x0 && k < r.x1), r.x1];
+    const zm = (r.z0 + r.z1) / 2;
+    for (let i = 0; i < xs.length - 1; i++) {
+      const a = xs[i], b = xs[i + 1], ya = groundHeight(a, zm) + lift, yb = groundHeight(b, zm) + lift;
+      const n = pos.length / 3;
+      pos.push(a, ya, r.z0, b, yb, r.z0, b, yb, r.z1, a, ya, r.z1);
+      idx.push(n, n + 2, n + 1, n, n + 3, n + 2);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+function mergeBoxes(boxes) {
+  const THREE = T();
+  const pos = [], nrm = [];
+  for (const b of boxes) {
+    const g = new THREE.BoxGeometry(b.x1 - b.x0, b.h, b.z1 - b.z0).toNonIndexed();
+    g.translate((b.x0 + b.x1) / 2, (b.y || 0) + b.h / 2, (b.z0 + b.z1) / 2);
+    pos.push(...g.attributes.position.array);
+    nrm.push(...g.attributes.normal.array);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  return g;
+}
+
+const faceAngle = f => Math.atan2(f[0], f[1]);
+
+// ---------------------------------------------------------------- модели
+function makeCar(color, withSchoolSign) {
+  const THREE = T();
+  const root = new THREE.Group();
+  root.rotation.order = 'YZX';
+  const paint = new THREE.MeshStandardMaterial({ color, metalness: 0.35, roughness: 0.38 });
+  const glass = new THREE.MeshStandardMaterial({ color: 0x1b2631, metalness: 0.6, roughness: 0.12 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0x1c1f23, roughness: 0.7 });
+  const lamp = (c, i = 0) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
+  const add = (geo, mat, x, y, z, parent = root) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    parent.add(m);
+    return m;
+  };
+
+  const s = new THREE.Shape();
+  s.moveTo(-0.85, 0.36);
+  s.lineTo(-0.9, 0.64);
+  s.quadraticCurveTo(-0.92, 0.88, -0.72, 0.94);
+  s.lineTo(0.3, 0.97);
+  s.lineTo(2.25, 0.95);
+  s.quadraticCurveTo(3.2, 0.9, 3.46, 0.8);
+  s.quadraticCurveTo(3.6, 0.72, 3.58, 0.5);
+  s.lineTo(3.52, 0.34);
+  s.lineTo(3.1, 0.32);
+  s.absarc(2.65, 0.3, 0.42, 0, Math.PI, false);
+  s.lineTo(0.42, 0.32);
+  s.absarc(0, 0.3, 0.42, 0, Math.PI, false);
+  s.lineTo(-0.85, 0.36);
+  const bodyGeo = new THREE.ExtrudeGeometry(s, { depth: 1.7, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 2, curveSegments: 10 });
+  bodyGeo.translate(0, 0, -0.85);
+  add(bodyGeo, paint, 0, 0, 0);
+
+  const cab = new THREE.Shape();
+  cab.moveTo(0.18, 0.93); cab.lineTo(0.74, 1.4); cab.lineTo(1.78, 1.43); cab.lineTo(2.4, 0.95); cab.lineTo(0.18, 0.93);
+  const cabGeo = new THREE.ExtrudeGeometry(cab, { depth: 1.36, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 1 });
+  cabGeo.translate(0, 0, -0.68);
+  const cabin = new THREE.Group();
+  root.add(cabin);
+  add(cabGeo, glass, 0, 0, 0, cabin);
+  add(new THREE.BoxGeometry(1.0, 0.05, 1.36), paint, 1.26, 1.44, 0, cabin);
+  add(new THREE.BoxGeometry(0.1, 0.46, 1.43), paint, 1.3, 1.18, 0, cabin);
+  add(new THREE.BoxGeometry(0.1, 0.1, 0.2), paint, 2.28, 1.0, 0.98);
+  add(new THREE.BoxGeometry(0.1, 0.1, 0.2), paint, 2.28, 1.0, -0.98);
+
+  add(new THREE.BoxGeometry(0.12, 0.22, 1.72), trim, 3.56, 0.42, 0);
+  add(new THREE.BoxGeometry(0.12, 0.22, 1.72), trim, -0.88, 0.45, 0);
+  add(new THREE.BoxGeometry(0.04, 0.14, 0.9), trim, 3.6, 0.62, 0);
+  const plate = new THREE.MeshStandardMaterial({ color: 0xf5f5f2, roughness: 0.5 });
+  add(new THREE.BoxGeometry(0.02, 0.11, 0.52), plate, -0.95, 0.52, 0);
+  add(new THREE.BoxGeometry(0.02, 0.11, 0.52), plate, 3.63, 0.44, 0);
+
+  const head = lamp(0xfff3d6, 0.5), tail = lamp(0xd01810, 0.2), rev = lamp(0xffffff, 0);
+  const indL = lamp(0xff9a1a, 0), indR = lamp(0xff9a1a, 0);
+  for (const z of [-0.58, 0.58]) {
+    add(new THREE.BoxGeometry(0.06, 0.12, 0.36), head, 3.55, 0.7, z);
+    add(new THREE.BoxGeometry(0.05, 0.14, 0.38), tail, -0.87, 0.82, z);
+    add(new THREE.BoxGeometry(0.04, 0.07, 0.14), rev, -0.88, 0.66, z * 0.52);
+  }
+  for (const [mat, z] of [[indL, -1], [indR, 1]]) {
+    add(new THREE.BoxGeometry(0.05, 0.07, 0.14), mat, 3.54, 0.7, 0.82 * z);
+    add(new THREE.BoxGeometry(0.05, 0.07, 0.1), mat, -0.86, 0.82, 0.8 * z);
+    add(new THREE.BoxGeometry(0.12, 0.035, 0.02), mat, 2.95, 0.84, 0.91 * z);
+  }
+
+  if (withSchoolSign) {
+    const tex = canvasTex(128, 128, ctx => {
+      ctx.fillStyle = '#d32011'; ctx.beginPath(); ctx.moveTo(64, 6); ctx.lineTo(124, 118); ctx.lineTo(4, 118); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(64, 26); ctx.lineTo(108, 108); ctx.lineTo(20, 108); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#1a1a1a'; ctx.font = '800 54px "Fira Sans Extra Condensed", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('У', 64, 98);
+    });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6 });
+    const tri = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), mat);
+    tri.position.set(1.2, 1.64, 0);
+    tri.rotation.y = Math.PI / 2;
+    tri.castShadow = true;
+    cabin.add(tri);
+    add(new THREE.BoxGeometry(0.2, 0.05, 0.2), trim, 1.2, 1.48, 0, cabin);
+  }
+
+  // Салон: торпедо и руль. Снаружи их закрывает тонированное стекло, видны только из салона
+  const dashMat = new THREE.MeshStandardMaterial({ color: 0x24282c, roughness: 0.85 });
+  add(new THREE.BoxGeometry(2.2, 0.06, 1.3), dashMat, 1.2, 0.98, 0);
+  add(new THREE.BoxGeometry(0.55, 0.14, 1.36), dashMat, 2.08, 0.94, 0);
+  const column = new THREE.Group();            // наклон рулевой колонки
+  column.position.set(1.78, 0.93, -0.37);
+  column.rotation.z = -0.45;
+  const steeringWheel = new THREE.Group();     // вращение руля вокруг своей оси
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.02, 8, 28), dashMat);
+  rim.rotation.y = Math.PI / 2;
+  const hubBar = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.32), dashMat);
+  steeringWheel.add(rim, hubBar);
+  column.add(steeringWheel);
+  root.add(column);
+
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x191a1b, roughness: 0.92 });
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xb9bec4, metalness: 0.8, roughness: 0.32 });
+  const tireGeo = new THREE.CylinderGeometry(CAR.wheelR, CAR.wheelR, 0.21, 22); tireGeo.rotateX(Math.PI / 2);
+  const rimGeo = new THREE.CylinderGeometry(0.19, 0.19, 0.215, 10); rimGeo.rotateX(Math.PI / 2);
+  const spokeGeo = new THREE.BoxGeometry(0.34, 0.05, 0.22);
+  const wheels = [];
+  for (const [lon, lat] of [[CAR.wheelbase, -CAR.track / 2], [CAR.wheelbase, CAR.track / 2], [0, CAR.track / 2], [0, -CAR.track / 2]]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(lon, CAR.wheelR, lat);
+    const spin = new THREE.Group();
+    pivot.add(spin);
+    add(tireGeo, tireMat, 0, 0, 0, spin);
+    add(rimGeo, rimMat, 0, 0, 0, spin);
+    add(spokeGeo, trim, 0, 0, 0, spin);
+    root.add(pivot);
+    wheels.push({ pivot, spin });
+  }
+  return { root, cabin, wheels, head, tail, rev, indL, indR, steeringWheel };
+}
+
+function makePed() {
+  const THREE = T();
+  const g = new THREE.Group();
+  const jacket = new THREE.MeshStandardMaterial({ color: 0xd9632e, roughness: 0.8 });
+  const pants = new THREE.MeshStandardMaterial({ color: 0x2e3642, roughness: 0.9 });
+  const skin = new THREE.MeshStandardMaterial({ color: 0xc99f7e, roughness: 0.8 });
+  const hair = new THREE.MeshStandardMaterial({ color: 0x2a211d, roughness: 0.9 });
+  const add = (geo, mat, x, y, z, parent = g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; };
+  add(new THREE.CylinderGeometry(0.17, 0.2, 0.62, 10), jacket, 0, 1.13, 0);
+  add(new THREE.SphereGeometry(0.11, 14, 10), skin, 0, 1.58, 0);
+  add(new THREE.SphereGeometry(0.116, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), hair, 0, 1.6, 0);
+  const limb = (y, z, len, w, mat) => {
+    const p = new THREE.Group(); p.position.set(0, y, z); g.add(p);
+    add(new THREE.BoxGeometry(w, len, w + 0.02), mat, 0, -len / 2, 0, p);
+    return p;
+  };
+  const legs = [limb(0.84, -0.09, 0.84, 0.13, pants), limb(0.84, 0.09, 0.84, 0.13, pants)];
+  const arms = [limb(1.4, -0.24, 0.6, 0.09, jacket), limb(1.4, 0.24, 0.6, 0.09, jacket)];
+  return { root: g, legs, arms };
+}
+
+function makeTrafficLight(glow) {
+  const THREE = T();
+  const g = new THREE.Group();
+  const metal = new THREE.MeshStandardMaterial({ color: 0x6d7378, metalness: 0.6, roughness: 0.5 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x1f2326, roughness: 0.7 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.6 });
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  add(new THREE.CylinderGeometry(0.06, 0.07, 3.3, 10), metal, 0, 1.65, 0);
+  add(new THREE.BoxGeometry(0.56, 1.24, 0.02), white, 0, 3.05, -0.16);
+  add(new THREE.BoxGeometry(0.5, 1.16, 0.03), dark, 0, 3.05, -0.145);
+  add(new THREE.BoxGeometry(0.34, 1.0, 0.26), dark, 0, 3.05, 0);
+  const lampsArr = [];
+  [['r', 0.31, 0xff3b2f, 0x3a1310], ['y', 0, 0xffc21a, 0x3a2d0a], ['g', -0.31, 0x2dff8a, 0x0c2a19]].forEach(([k, dy, on, off]) => {
+    const mat = new THREE.MeshBasicMaterial({ color: off });
+    add(new THREE.CircleGeometry(0.11, 20), mat, 0, 3.05 + dy, 0.131);
+    add(new THREE.BoxGeometry(0.28, 0.02, 0.14), dark, 0, 3.05 + dy + 0.13, 0.2);
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), new THREE.MeshBasicMaterial({
+      map: glow, color: on, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.85,
+    }));
+    halo.position.set(0, 3.05 + dy, 0.16);
+    g.add(halo);
+    lampsArr.push({ k, mat, halo, on: new THREE.Color(on), off: new THREE.Color(off) });
+  });
+  return { root: g, lamps: lampsArr };
+}
+
+// ---------------------------------------------------------------- сцена
+function createView(canvas) {
+  const THREE = T();
+  const small = Math.min(window.innerWidth, window.innerHeight) < 600;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xd6e0e6, 110, 420);
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 900);
+
+  // небо: вертикальный градиент на куполе
+  {
+    const geo = new THREE.SphereGeometry(600, 32, 16);
+    const top = new THREE.Color(0x5f97d0), hor = new THREE.Color(0xdbe5ec), low = new THREE.Color(0xc9ccc0);
+    const col = [];
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const y = p.getY(i) / 600;
+      const c = y > 0 ? hor.clone().lerp(top, Math.pow(y, 0.55)) : hor.clone().lerp(low, Math.min(1, -y * 4));
+      col.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const sky = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+    scene.add(sky);
+    scene.userData.sky = sky;
+  }
+
+  scene.add(new THREE.HemisphereLight(0xdfe9f3, 0x7d7650, 0.8));
+  const sun = new THREE.DirectionalLight(0xfff1dc, 1.25);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+  Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32, near: 1, far: 220 });
+  sun.shadow.bias = -0.0004;
+  scene.add(sun, sun.target);
+
+  const texA = asphaltTex(), texG = steppeTex(), texC = concreteTex(), texB = barrierTex(), glow = glowTex();
+  [texA, texG, texC, texB].forEach(t => { t.anisotropy = aniso; });
+
+  const ground = new THREE.Mesh(flatQuad(-300, -340, 420, 300, -0.03, 12), new THREE.MeshStandardMaterial({ map: texG, roughness: 1 }));
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const asphalt = new THREE.MeshStandardMaterial({ map: texA, roughness: 0.92 });
+  for (const r of [
+    { x0: -12, x1: 126, z0: -2.6, z1: 2.6 },
+    { x0: 71.5, x1: 79.5, z0: 2.6, z1: 5.2 },
+    { x0: 125.65, x1: 134.35, z0: -130, z1: 60 },
+  ]) {
+    const m = new THREE.Mesh(flatQuad(r.x0, r.z0, r.x1, r.z1, 0, 7), asphalt);
+    m.receiveShadow = true;
+    scene.add(m);
+  }
+
+  // эстакада: верх по профилю, барьеры по бокам
+  {
+    const pos = [], uv = [], idx = [];
+    RAMP_KINKS.forEach((x, i) => {
+      const y = groundHeight(x, 0);
+      pos.push(x, y, -RAMP.lane, x, y, RAMP.lane);
+      uv.push(x / 3, RAMP.lane / 3, x / 3, -RAMP.lane / 3);
+      if (i) { const n = i * 2; idx.push(n - 2, n - 1, n + 1, n - 2, n + 1, n); }
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const top = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: texC, roughness: 0.95 }));
+    top.receiveShadow = true;
+    scene.add(top);
+    const prof = new THREE.Shape();
+    prof.moveTo(RAMP.x0, 0); prof.lineTo(RAMP.x0, 0.5); prof.lineTo(RAMP.x1, RAMP.h + 0.5);
+    prof.lineTo(RAMP.x2, RAMP.h + 0.5); prof.lineTo(RAMP.x3, 0.5); prof.lineTo(RAMP.x3, 0); prof.lineTo(RAMP.x0, 0);
+    const wallGeo = new THREE.ExtrudeGeometry(prof, { depth: RAMP.wall - RAMP.lane, bevelEnabled: false });
+    texB.repeat.set(0.5, 1.6);
+    const wallMat = new THREE.MeshStandardMaterial({ map: texB, roughness: 0.8 });
+    for (const z of [RAMP.lane, -RAMP.wall]) {
+      const m = new THREE.Mesh(wallGeo, wallMat);
+      m.position.z = z;
+      m.castShadow = m.receiveShadow = true;
+      scene.add(m);
+    }
+  }
+
+  // бордюры, тротуары у перехода, ограждение в конце западной ветки
+  {
+    const curb = [
+      [-12, 30, -2.8, -2.6], [56, 100, -2.8, -2.6], [112, 125.65, -2.8, -2.6],
+      [-12, 30, 2.6, 2.8], [56, 71.5, 2.6, 2.8], [79.5, 100, 2.6, 2.8], [112, 125.65, 2.6, 2.8],
+      [71.3, 79.7, 5.2, 5.4], [71.3, 71.5, 2.8, 5.2], [79.5, 79.7, 2.8, 5.2],
+      [125.45, 125.65, -130, -2.8], [125.45, 125.65, 2.8, 60], [134.35, 134.55, -130, 60],
+    ].map(([x0, x1, z0, z1]) => ({ x0, x1, z0, z1, h: 0.15 }));
+    const cm = new THREE.Mesh(mergeBoxes(curb), new THREE.MeshStandardMaterial({ color: 0xb9bcbe, roughness: 0.9 }));
+    cm.receiveShadow = cm.castShadow = true;
+    scene.add(cm);
+    const walk = new THREE.Mesh(mergeBoxes([
+      { x0: 100, x1: 112, z0: -6.2, z1: -2.6, h: 0.15 }, { x0: 100, x1: 112, z0: 2.6, z1: 6.2, h: 0.15 },
+    ]), new THREE.MeshStandardMaterial({ color: 0xc8c3b6, roughness: 0.95 }));
+    walk.receiveShadow = true;
+    scene.add(walk);
+    const end = WALLS[2];
+    const block = new THREE.Mesh(new THREE.BoxGeometry(end.x1 - end.x0, 0.9, end.z1 - end.z0), new THREE.MeshStandardMaterial({ map: texB, roughness: 0.8 }));
+    block.position.set((end.x0 + end.x1) / 2, 0.45, 0);
+    block.castShadow = true;
+    scene.add(block);
+  }
+
+  // разметка
+  {
+    const W = [], Y = [];
+    const edge = 0.15;
+    for (const [x0, x1] of [[-12, 30], [56, 126]]) W.push({ x0, x1, z0: -2.25 - edge, z1: -2.25 });
+    for (const [x0, x1] of [[-12, 30], [56, 71.85], [79.15, 126]]) W.push({ x0, x1, z0: 2.25, z1: 2.25 + edge });
+    W.push({ x0: 125.85, x1: 126, z0: -130, z1: -2.25 }, { x0: 125.85, x1: 126, z0: 2.25, z1: 60 }, { x0: 134, x1: 134 + edge, z0: -130, z1: 60 });
+    for (const r of SOLID_CENTER) W.push({ x0: 129.925, x1: 130.075, z0: r.z0, z1: r.z1 });
+    for (let z = -130; z < -30; z += 9) W.push({ x0: 129.925, x1: 130.075, z0: z, z1: Math.min(z + 3, -30) });
+    for (let z = 25; z < 60; z += 9) W.push({ x0: 129.925, x1: 130.075, z0: z, z1: z + 3 });
+    W.push({ x0: -0.15, x1: 0, z0: -2.25, z1: 2.25 });
+    W.push({ x0: START.lineX0, x1: START.lineX1, z0: -2.25, z1: 2.25 });
+    W.push({ x0: HILL.stopX0, x1: HILL.stopX1, z0: -RAMP.lane, z1: RAMP.lane });
+    Y.push({ x0: HILL.fixX0, x1: HILL.fixX1, z0: -RAMP.lane, z1: RAMP.lane });
+    W.push(...PARK_LINES);
+    Y.push(PARK.fix);
+    W.push({ x0: XWALK.stopX0, x1: XWALK.stopX1, z0: -2.25, z1: 2.25 });
+    for (const c of [-1.65, -0.55, 0.55, 1.65]) W.push({ x0: XWALK.x0, x1: XWALK.x1, z0: c - 0.25, z1: c + 0.25 });
+    W.push({ x0: JUNCTION.stopX0, x1: JUNCTION.stopX1, z0: -2.25, z1: 2.25 }, JUNCTION.southStop, JUNCTION.northStop);
+    W.push({ x0: 130, x1: 134, z0: FINISH.lineZ0, z1: FINISH.lineZ1 });
+    for (const l of ZONE_LINES) {
+      if (l.x != null) {
+        const half = l.x > RAMP.x0 - 1 && l.x < RAMP.x3 + 1 ? RAMP.lane : 2.25;
+        for (let z = -half; z < half; z += 0.25) Y.push({ x0: l.x, x1: l.x + 0.1, z0: z, z1: Math.min(z + 0.15, half) });
+      } else {
+        for (let x = 130; x < 134; x += 0.25) Y.push({ x0: x, x1: Math.min(x + 0.15, 134), z0: l.z - 0.1, z1: l.z });
+      }
+    }
+    const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const wm = new THREE.Mesh(markingGeo(W, 0.012), mat(0xf1f1ec));
+    const ym = new THREE.Mesh(markingGeo(Y, 0.013), mat(0xf2c200));
+    wm.receiveShadow = ym.receiveShadow = true;
+    scene.add(wm, ym);
+  }
+
+  // надписи и стрелка на асфальте
+  const decal = (tex, w, h, x, z, rotY) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({
+      map: tex, transparent: true, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, depthWrite: false,
+    }));
+    m.rotation.order = 'YXZ';
+    m.rotation.set(-Math.PI / 2, rotY, 0);
+    m.position.set(x, 0.014, z);
+    m.receiveShadow = true;
+    scene.add(m);
+  };
+  const word = text => paintTex(512, 160, ctx => {
+    ctx.font = '800 150px "Fira Sans Extra Condensed", Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.save(); ctx.scale(1, 1); ctx.fillText(text, 256, 88); ctx.restore();
+  });
+  decal(word('СТАРТ'), 3.2, 1.0, 8.4, 0, -Math.PI / 2);
+  decal(word('ФИНИШ'), 3.2, 1.0, 132, -73, 0);
+  decal(paintTex(256, 512, ctx => {
+    ctx.lineWidth = 34; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(150, 512); ctx.lineTo(150, 230); ctx.quadraticCurveTo(150, 170, 90, 170); ctx.lineTo(80, 170); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10, 170); ctx.lineTo(96, 100); ctx.lineTo(96, 240); ctx.closePath(); ctx.fill();
+  }), 1.1, 2.2, 116, 0, -Math.PI / 2);
+
+  // знаки
+  for (const s of SIGNS) {
+    const g = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.5, 8), new THREE.MeshStandardMaterial({ color: 0x8b9197, metalness: 0.5, roughness: 0.5 }));
+    pole.position.y = 1.25;
+    pole.castShadow = true;
+    const faceTex = signFace(s.type, s.text);
+    faceTex.anisotropy = aniso;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.MeshStandardMaterial({
+      map: faceTex, alphaTest: 0.5, roughness: 0.55, emissive: 0xffffff, emissiveMap: faceTex, emissiveIntensity: 0.18,
+    }));
+    face.position.set(0, 2.15, 0.04);
+    face.castShadow = true;
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.MeshStandardMaterial({ map: signBack(s.type), alphaTest: 0.5 }));
+    back.position.set(0, 2.15, 0.03);
+    back.rotation.y = Math.PI;
+    g.add(pole, face, back);
+    g.position.set(s.x, 0, s.z);
+    g.rotation.y = faceAngle(s.face);
+    scene.add(g);
+  }
+
+  // таблички упражнений
+  for (const b of BOARDS) {
+    const ex = EXERCISES.find(e => e.id === b.ex);
+    const tex = boardTex(ex.no, ex.short);
+    tex.anisotropy = aniso;
+    const g = new THREE.Group();
+    const leg = new THREE.MeshStandardMaterial({ color: 0x8b9197, metalness: 0.5, roughness: 0.5 });
+    for (const x of [-0.7, 0.7]) {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 8), leg);
+      p.position.set(x, 1.15, -0.02);
+      p.castShadow = true;
+      g.add(p);
+    }
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.9), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.15 }));
+    face.position.y = 2.05;
+    face.castShadow = true;
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.9), new THREE.MeshStandardMaterial({ color: 0x8c9298 }));
+    back.position.set(0, 2.05, -0.01);
+    back.rotation.y = Math.PI;
+    g.add(face, back);
+    g.position.set(b.x, 0, b.z);
+    g.rotation.y = faceAngle(b.face);
+    scene.add(g);
+  }
+
+  // светофоры
+  const lights = LIGHTS.map(l => {
+    const tl = makeTrafficLight(glow);
+    tl.root.position.set(l.x, 0, l.z);
+    tl.root.rotation.y = faceAngle(l.face);
+    scene.add(tl.root);
+    return { ...tl, group: l.group };
+  });
+
+  // здание автодрома, флагшток, тополя и фонари
+  {
+    const bld = new THREE.Group();
+    const panel = new THREE.MeshStandardMaterial({ color: 0xd9dcdf, roughness: 0.85 });
+    const band = new THREE.MeshStandardMaterial({ color: 0x0d4a9e, roughness: 0.6 });
+    const win = new THREE.MeshStandardMaterial({ color: 0x2a3a4a, metalness: 0.5, roughness: 0.2 });
+    const box = (w, h, d, x, y, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; bld.add(o); };
+    box(20, 6.4, 9, 0, 3.2, 0, panel);
+    box(20.2, 0.9, 9.2, 0, 6.1, 0, band);
+    box(18, 1.4, 0.1, 0, 4.2, 4.52, win);
+    box(18, 1.4, 0.1, 0, 1.6, 4.52, win);
+    const title = canvasTex(1024, 128, (ctx, w, h) => {
+      ctx.fillStyle = '#0d4a9e'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#ffffff'; ctx.font = '800 92px "Fira Sans Extra Condensed", Arial, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('АВТОДРОМ · КАТЕГОРИЯ B', w / 2, h / 2 + 4);
+    });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(12, 1.5), new THREE.MeshStandardMaterial({ map: title, emissive: 0xffffff, emissiveMap: title, emissiveIntensity: 0.2 }));
+    sign.position.set(0, 6.1, 4.62);
+    bld.add(sign);
+    bld.position.set(1, 0, -19);
+    scene.add(bld);
+
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 9, 10), new THREE.MeshStandardMaterial({ color: 0xcfd3d6, metalness: 0.6, roughness: 0.4 }));
+    pole.position.set(14, 4.5, -11);
+    pole.castShadow = true;
+    scene.add(pole);
+    const flag = canvasTex(360, 180, (ctx, w, h) => {
+      ctx.fillStyle = '#00afca'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#fec50c';
+      ctx.beginPath(); ctx.arc(w / 2 + 12, h / 2 - 10, 30, 0, Math.PI * 2); ctx.fill();
+      for (let i = 0; i < 32; i++) {
+        const a = (i / 32) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 + 12 + Math.cos(a) * 36, h / 2 - 10 + Math.sin(a) * 36);
+        ctx.lineTo(w / 2 + 12 + Math.cos(a + 0.06) * 50, h / 2 - 10 + Math.sin(a + 0.06) * 50);
+        ctx.lineTo(w / 2 + 12 + Math.cos(a - 0.06) * 50, h / 2 - 10 + Math.sin(a - 0.06) * 50);
+        ctx.fill();
+      }
+      ctx.beginPath(); ctx.moveTo(w / 2 - 50, h / 2 + 40); ctx.quadraticCurveTo(w / 2 + 12, h / 2 + 18, w / 2 + 74, h / 2 + 40);
+      ctx.quadraticCurveTo(w / 2 + 12, h / 2 + 28, w / 2 - 50, h / 2 + 40); ctx.fill();
+      for (let y = 8; y < h; y += 20) ctx.fillRect(14, y, 16, 12);
+    });
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1, 12, 1), new THREE.MeshStandardMaterial({ map: flag, side: THREE.DoubleSide, roughness: 0.8 }));
+    fl.position.set(15.15, 8.3, -11);
+    fl.castShadow = true;
+    scene.add(fl);
+    scene.userData.flag = fl;
+
+    const spots = [];
+    for (let x = -30; x <= 150; x += 7.5) { spots.push([x, -30 - (x % 2)]); if (x < 122 || x > 138) spots.push([x, 16 + (x % 3)]); }
+    for (let z = -125; z <= 40; z += 8) { spots.push([152, z]); spots.push([110 - (z % 2), z < -35 ? z : -200]); }
+    const trees = spots.filter(([x, z]) => z > -150 && !(x > -12 && x < 16 && z < -8 && z > -26));
+    const trunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 2.4, 6); trunkGeo.translate(0, 1.2, 0);
+    const crownGeo = new THREE.ConeGeometry(1.25, 7.5, 8); crownGeo.translate(0, 5.8, 0);
+    const trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 1 }), trees.length);
+    const crowns = new THREE.InstancedMesh(crownGeo, new THREE.MeshStandardMaterial({ color: 0x5f7a3c, roughness: 1 }), trees.length);
+    const m4 = new THREE.Matrix4();
+    trees.forEach(([x, z], i) => {
+      const s = 0.8 + ((i * 37) % 10) / 22;
+      m4.makeScale(s, s, s); m4.setPosition(x, 0, z);
+      trunks.setMatrixAt(i, m4); crowns.setMatrixAt(i, m4);
+    });
+    trunks.castShadow = crowns.castShadow = true;
+    scene.add(trunks, crowns);
+
+    const lampPos = [[18, -3.6], [62, -3.6], [92, -3.6], [118, -3.6], [135.4, -24], [135.4, -48], [135.4, -76]];
+    const postGeo = new THREE.CylinderGeometry(0.07, 0.09, 7, 8); postGeo.translate(0, 3.5, 0);
+    const posts = new THREE.InstancedMesh(postGeo, new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.5, roughness: 0.5 }), lampPos.length);
+    lampPos.forEach(([x, z], i) => { m4.makeTranslation(x, 0, z); posts.setMatrixAt(i, m4); });
+    posts.castShadow = true;
+    scene.add(posts);
+  }
+
+  // машины и пешеход
+  const player = makeCar(0xeef0f2, true);
+  const npc = makeCar(0x2b5d9c, false);
+  const ped = makePed();
+  scene.add(player.root, npc.root, ped.root);
+
+  // ---------------------------------------------------------------- кадр
+  const camPos = new THREE.Vector3(-20, 30, 40), camLook = new THREE.Vector3(10, 0, 0), up = new THREE.Vector3(0, 1, 0);
+  const tmp = new THREE.Vector3(), tmpLook = new THREE.Vector3();
+  let orbit = 0, lastMode = null, clock = 0;
+
+  function syncCar(m, car, rideX, rideZ, heading, y, pitch, steer, spin) {
+    m.root.position.set(rideX, y, rideZ);
+    m.root.rotation.set(0, -heading, pitch);
+    m.wheels.forEach((w, i) => { w.spin.rotation.z = spin; if (i < 2) w.pivot.rotation.y = -steer; });
+  }
+
+  function render(w, dt, mode) {
+    clock += dt;
+    const car = w.car;
+    syncCar(player, car, car.x, car.z, car.heading, car.y, car.pitch, car.steer, car.wheelSpin);
+    const blinkOn = car.ind && car.indTime % 0.66 < 0.33;
+    player.indL.emissiveIntensity = blinkOn && car.ind < 0 ? 2.6 : 0;
+    player.indR.emissiveIntensity = blinkOn && car.ind > 0 ? 2.6 : 0;
+    player.tail.emissiveIntensity = car.brake > 0.05 ? 2.4 : 0.25;
+    player.rev.emissiveIntensity = car.gear === 'R' ? 1.8 : 0;
+    player.head.emissiveIntensity = car.engine ? 0.9 : 0.1;
+    player.cabin.visible = mode !== 'cockpit';
+    player.steeringWheel.rotation.x = -(car.steer / CAR.maxSteer) * 2.6;
+
+    const n = w.npc;
+    syncCar(npc, null, n.x, n.z - (CAR.length / 2 - CAR.rearOverhang), n.heading, 0, 0, 0, n.spin);
+    npc.tail.emissiveIntensity = n.v < 6.5 && n.v > 0.1 ? 2.2 : n.v <= 0.1 ? 1.6 : 0.25;
+    npc.head.emissiveIntensity = 0.9;
+
+    const p = w.ped;
+    ped.root.visible = p.visible && p.state !== 'done';
+    if (ped.root.visible) {
+      ped.root.position.set(p.x, Math.abs(p.z) > 2.6 ? 0.15 : 0, p.z);
+      ped.root.rotation.y = p.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+      const walking = p.state === 'walk' && !p.blocked;
+      const sw = walking ? Math.sin(p.walk) * 0.55 : 0;
+      ped.legs[0].rotation.z = sw; ped.legs[1].rotation.z = -sw;
+      ped.arms[0].rotation.z = -sw * 0.8; ped.arms[1].rotation.z = sw * 0.8;
+    }
+
+    for (const l of lights) {
+      const on = lamps(l.group === 'main' ? w.light.phase : crossPhase(w.light), w.light.clock);
+      for (const lp of l.lamps) {
+        lp.mat.color.copy(on[lp.k] ? lp.on : lp.off);
+        lp.halo.visible = on[lp.k];
+      }
+    }
+
+    const flag = scene.userData.flag;
+    if (flag) {
+      const pa = flag.geometry.attributes.position;
+      for (let i = 0; i < pa.count; i++) {
+        const x = pa.getX(i) + 1.1;
+        pa.setZ(i, Math.sin(x * 2.4 - clock * 3) * 0.08 * x);
+      }
+      pa.needsUpdate = true;
+    }
+
+    // камера
+    const c = Math.cos(car.heading), s = Math.sin(car.heading);
+    const cx = car.x + c * 1.35, cz = car.z + s * 1.35;
+    let k = 1 - Math.exp(-dt * 5);
+    if (mode !== lastMode) { k = 1; lastMode = mode; }
+    if (mode === 'orbit') {
+      orbit += dt * 0.05;
+      tmp.set(62 + Math.cos(orbit) * 95, 48, -18 + Math.sin(orbit) * 95);
+      tmpLook.set(66, 0, -12);
+      camera.up.set(0, 1, 0);
+      k = Math.max(k, 0.04);
+    } else if (mode === 'cockpit') {
+      const cp = Math.cos(car.pitch);
+      const lift = Math.sin(car.pitch) * 1.25;
+      tmp.set(car.x + c * 1.25 * cp + s * 0.37, car.y + 1.22 + lift, car.z + s * 1.25 * cp - c * 0.37);
+      tmpLook.set(tmp.x + c * cp * 10, tmp.y + Math.sin(car.pitch) * 10 - 0.3, tmp.z + s * cp * 10);
+      camera.up.set(0, 1, 0);
+      k = 1;
+    } else if (mode === 'top') {
+      tmp.set(cx, car.y + 24, cz);
+      tmpLook.set(cx, car.y, cz);
+      up.set(c, 0, s);
+      camera.up.lerp(up, k).normalize();
+    } else {
+      tmp.set(car.x - c * 4.9, car.y + 2.7, car.z - s * 4.9);
+      tmpLook.set(car.x + c * 5, car.y + 0.8, car.z + s * 5);
+      camera.up.set(0, 1, 0);
+    }
+    camPos.lerp(tmp, k);
+    camLook.lerp(tmpLook, mode === 'cockpit' ? 1 : Math.min(1, k * 1.6));
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+    camera.fov = mode === 'cockpit' ? 72 : 60;
+    camera.updateProjectionMatrix();
+
+    const focus = mode === 'orbit' ? tmpLook : player.root.position;
+    sun.target.position.set(focus.x, 0, focus.z);
+    sun.position.set(focus.x - 40, 75, focus.z + 32);
+    scene.userData.sky.position.copy(camera.position);
+
+    renderer.render(scene, camera);
+  }
+
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+
+  return { render, resize };
+}
+
+// ---- ui.js
+// Интерфейс: клавиатура и сенсор, HUD, меню, пауза, протокол, звук.
+
+const CARDS_URL = 'https://dezdoss.github.io/pdd-kz-cards/';
+const KEY_LABEL = { belt: 'B', engine: 'I', indL: 'Q', indR: 'E', handbrake: 'Пробел', gearP: 'P', gearR: 'R', gearN: 'N', gearD: 'F', gas: 'W', camera: 'C' };
+const TOUCH_LABEL = { belt: 'Ремень', engine: 'Двиг.', indL: '◀', indR: '▶', handbrake: 'Ручник', gearP: 'P', gearR: 'R', gearN: 'N', gearD: 'D', gas: 'Газ', camera: 'Вид' };
+const KEYMAP = {
+  KeyQ: 'indL', KeyE: 'indR', KeyB: 'belt', KeyI: 'engine', Space: 'handbrake',
+  KeyP: 'gearP', KeyR: 'gearR', KeyN: 'gearN', KeyF: 'gearD',
+  KeyC: 'camera', KeyM: 'sound', Escape: 'pause',
+};
+const DRIVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
+const UI_ACTIONS = new Set(['camera', 'sound', 'pause']);
+const HISTORY_KEY = 'pddkz-autodrom-history';
+const CAMERAS = ['chase', 'cockpit', 'top'];
+const CAMERA_NAME = { chase: 'Вид сзади', cockpit: 'Из салона', top: 'Сверху' };
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mmss = t => { t = Math.max(0, Math.floor(t)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+const sec = t => t.toFixed(1).replace('.', ',');
+
+// ---------------------------------------------------------------- ввод
+function createInput(isTouch) {
+  const down = new Set();
+  const queue = [];
+  const touch = { gas: false, brake: false, steering: false, steerAbs: 0 };
+  let throttle = 0, brake = 0;
+
+  window.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (DRIVE_KEYS.has(e.code) || KEYMAP[e.code]) e.preventDefault();
+    if (e.repeat) return;
+    down.add(e.code);
+    if (KEYMAP[e.code]) queue.push(KEYMAP[e.code]);
+  });
+  window.addEventListener('keyup', e => down.delete(e.code));
+  window.addEventListener('blur', () => { down.clear(); touch.gas = touch.brake = touch.steering = false; });
+
+  // Газ плавно нарастает, пока держат клавишу; тормоз — быстрее; отпустил — ноль сразу
+  function read(dt) {
+    const gas = down.has('KeyW') || down.has('ArrowUp') || touch.gas;
+    const stop = down.has('KeyS') || down.has('ArrowDown') || touch.brake;
+    throttle = gas ? Math.min(1, throttle + dt * 1.6) : 0;
+    brake = stop ? Math.min(1, brake + dt * 2.5) : 0;
+    const left = down.has('KeyA') || down.has('ArrowLeft'), right = down.has('KeyD') || down.has('ArrowRight');
+    const inp = { throttle, brake };
+    if (touch.steering) inp.steerAbs = touch.steerAbs;
+    else inp.steerDir = (right ? 1 : 0) - (left ? 1 : 0);
+    return inp;
+  }
+  const take = () => queue.splice(0);
+  const push = a => queue.push(a);
+  return { read, take, push, touch, isTouch };
+}
+
+// ---------------------------------------------------------------- звук
+function createAudio() {
+  let ctx = null, muted = false;
+  function unlock() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; } }
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  function tone(freq, dur, type, gain, delay = 0, slide) {
+    if (!ctx || muted) return;
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    unlock,
+    tick: on => tone(on ? 1850 : 1350, 0.02, 'square', 0.025),
+    penalty: hard => { tone(hard ? 240 : 330, 0.16, 'sawtooth', 0.05); tone(hard ? 170 : 250, 0.26, 'sawtooth', 0.05, 0.13); },
+    remark: () => tone(660, 0.12, 'triangle', 0.05),
+    command: () => { tone(880, 0.12, 'sine', 0.08); tone(1320, 0.3, 'sine', 0.08, 0.14); },
+    done: () => { tone(990, 0.09, 'triangle', 0.05); tone(1480, 0.16, 'triangle', 0.05, 0.08); },
+    end: pass => pass
+      ? [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'triangle', 0.06, i * 0.11))
+      : [392, 330, 262].forEach((f, i) => tone(f, 0.28, 'sawtooth', 0.04, i * 0.16)),
+    get muted() { return muted; },
+    set muted(v) { muted = v; },
+  };
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch (e) { return []; }
+}
+function saveHistory(list) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 8))); } catch (e) { /* хранилище недоступно */ }
+}
+
+// ---------------------------------------------------------------- мини-карта
+const MAP = { x0: -14, x1: 142, z0: -92, z1: 14 };
+function createMinimap(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const s = Math.min(W / (MAP.x1 - MAP.x0), H / (MAP.z1 - MAP.z0));
+  const ox = (W - (MAP.x1 - MAP.x0) * s) / 2, oy = (H - (MAP.z1 - MAP.z0) * s) / 2;
+  const px = x => ox + (x - MAP.x0) * s, pz = z => oy + (z - MAP.z0) * s;
+  // неподвижная часть рисуется один раз
+  const bg = document.createElement('canvas');
+  bg.width = W; bg.height = H;
+  {
+    const c2 = bg.getContext('2d');
+    const draw = (r, fill) => { c2.fillStyle = fill; c2.fillRect(px(r.x0), pz(r.z0), (r.x1 - r.x0) * s, (r.z1 - r.z0) * s); };
+    for (const r of CURB_AREAS) draw(r, '#454d56');
+    draw({ x0: RAMP.x0, x1: RAMP.x3, z0: -RAMP.wall, z1: RAMP.wall }, '#6b747d');
+    draw({ x0: RAMP.x0, x1: RAMP.x3, z0: -RAMP.lane, z1: RAMP.lane }, '#8a929a');
+    for (const c of [-1.65, -0.55, 0.55, 1.65]) draw({ x0: XWALK.x0, x1: XWALK.x1, z0: c - 0.25, z1: c + 0.25 }, '#e8e8e2');
+    draw({ x0: PARK.x0, x1: PARK.x1, z0: PARK.z0, z1: PARK.z1 }, '#56606a');
+    draw(PARK.fix, '#f5c400');
+    for (const x of [START.lineX0, HILL.stopX0, XWALK.stopX0, JUNCTION.stopX0]) draw({ x0: x, x1: x + 0.6, z0: -2.25, z1: 2.25 }, '#ffffff');
+    draw({ x0: 130, x1: 134, z0: FINISH.lineZ0 - 0.3, z1: FINISH.lineZ1 }, '#ffffff');
+    const labels = [['1', 3, -7], ['2', 35, -7], ['6', 75.5, 9], ['3', 106, -9], ['7', 118, -9], ['10', 139, -70]];
+    c2.font = '700 22px "Fira Sans Extra Condensed", Arial, sans-serif';
+    c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    for (const [t, x, z] of labels) {
+      c2.fillStyle = '#0d4a9e'; c2.beginPath(); c2.arc(px(x), pz(z), 13, 0, Math.PI * 2); c2.fill();
+      c2.fillStyle = '#ffffff'; c2.fillText(t, px(x), pz(z) + 1);
+    }
+  }
+  function draw(w) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(bg, 0, 0);
+    const L = lamps(w.light.phase, w.light.clock);
+    ctx.fillStyle = L.r ? '#ff4a3a' : L.y ? '#ffc21a' : L.g ? '#2fdc7c' : '#333';
+    ctx.beginPath(); ctx.arc(px(124.2), pz(4.6), 6, 0, Math.PI * 2); ctx.fill();
+    const n = w.npc;
+    ctx.fillStyle = '#5c8fd6';
+    ctx.fillRect(px(n.x - 0.9), pz(n.z - 2.2), 1.8 * s, 4.4 * s);
+    if (w.ped.visible && w.ped.state !== 'done') {
+      ctx.fillStyle = '#ff8a3c'; ctx.beginPath(); ctx.arc(px(w.ped.x), pz(w.ped.z), 5, 0, Math.PI * 2); ctx.fill();
+    }
+    const car = w.car, c = Math.cos(car.heading), sn = Math.sin(car.heading);
+    const P = (lon, lat) => [px(car.x + c * lon - sn * lat), pz(car.z + sn * lon + c * lat)];
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#0d1115'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(...P(4.2, 0)); ctx.lineTo(...P(-1.2, 1.4)); ctx.lineTo(...P(-0.4, 0)); ctx.lineTo(...P(-1.2, -1.4));
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  return { draw };
+}
+
+// ---------------------------------------------------------------- интерфейс
+function createUI(handlers) {
+  const $ = id => document.getElementById(id);
+  const isTouch = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
+  document.body.classList.toggle('touch', isTouch);
+  const input = createInput(isTouch);
+  const audio = createAudio();
+  const minimap = createMinimap($('minimap'));
+  const labels = isTouch ? TOUCH_LABEL : KEY_LABEL;
+  let camIndex = 0;
+  let history = loadHistory();
+  // DOM трогаем, только когда значение поменялось
+  let cache = new WeakMap();
+  const set = (el, key, value, apply) => {
+    let m = cache.get(el);
+    if (!m) cache.set(el, (m = new Map()));
+    if (m.get(key) === value) return;
+    m.set(key, value);
+    apply(value);
+  };
+  const text = (el, v) => set(el, 't', v, x => { el.textContent = x; });
+  const html = (el, v) => set(el, 'h', v, x => { el.innerHTML = x; });
+  const cls = (el, name, on) => set(el, 'c' + name, on, x => el.classList.toggle(name, x));
+
+  const renderHint = s => esc(s).replace(/\[(\w+)\]/g, (_, k) => '<kbd>' + esc(labels[k] || k) + '</kbd>');
+
+  // --- меню
+  $('source').textContent = 'Баллы: ' + SOURCE + '. Размеры кармана для парковки и лимит времени (10 минут) задаёт сам автодром — в Правилах их нет. Пешеход и попутная машина — для практики ПДД, на экзамене их нет.';
+  const keyRows = isTouch
+    ? [['Газ, Тормоз', 'педали справа, держите пальцем'], ['Руль', 'ведите пальцем по полосе слева'], ['◀ ▶', 'левый и правый указатели'], ['P R N D', 'селектор автоматической коробки'], ['Ремень, Двиг., Ручник', 'ремень, двигатель, стояночный тормоз'], ['Вид', 'сзади, из салона, сверху']]
+    : [['W / ↑', 'газ'], ['S / ↓', 'тормоз'], ['A D / ← →', 'руль'], ['Q / E', 'левый / правый указатель'], ['B', 'ремень'], ['I', 'двигатель (селектор в P или N)'], ['P R N F', 'селектор: P, R, N, D'], ['Пробел', 'стояночный тормоз'], ['C', 'вид: сзади, из салона, сверху'], ['M / Esc', 'звук / пауза']];
+  $('keys').innerHTML = keyRows.map(([k, v]) => `<dt>${k.split(', ').map(x => '<kbd>' + esc(x) + '</kbd>').join(' ')}</dt><dd>${esc(v)}</dd>`).join('');
+  {
+    const byKt = {};
+    for (const p of Object.values(PENALTIES)) (byKt[p.kt] = byKt[p.kt] || []).push(p);
+    const ktName = { 'КТ1': '1 · Старт', 'КТ2': '2 · Подъём', 'КТ3': '3 · Переход', 'КТ6': '6 · Параллельная парковка', 'КТ7': '7 · Регулируемый перекрёсток', 'КТ10': '10 · Финиш', 'КТ11': 'Общие' };
+    let rows = '<thead><tr><th>Упражнение</th><th>Нарушение</th><th>Баллы</th></tr></thead><tbody>';
+    for (const kt of Object.keys(byKt)) {
+      byKt[kt].forEach((p, i) => {
+        rows += `<tr>${i === 0 ? `<td class="kt" rowspan="${byKt[kt].length}">${esc(ktName[kt] || kt)}</td>` : ''}<td>${esc(p.text)}</td><td class="num">${p.pts}</td></tr>`;
+      });
+    }
+    $('pen-table').innerHTML = rows + '</tbody>';
+  }
+  function renderHistory() {
+    const box = $('history');
+    box.hidden = !history.length;
+    if (!history.length) return;
+    box.innerHTML = '<strong>Последние попытки</strong><ol>' + history.map(h =>
+      `<li><span class="${h.pass ? 'ok' : 'no'}">${h.pass ? 'сдал' : 'не сдал'}</span> · ${h.points} баллов · ${mmss(h.time)} · ${h.practice ? 'тренировка' : 'экзамен'} · ${esc(h.date)}</li>`).join('') + '</ol>';
+  }
+
+  // --- кнопки
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    audio.unlock();
+    if (b.dataset.a) { input.push(b.dataset.a); b.blur(); }
+    if (b.dataset.ui) uiAction(b.dataset.ui);
+  });
+  $('btn-exam').addEventListener('click', () => handlers.start(false));
+  $('btn-practice').addEventListener('click', () => handlers.start(true));
+
+  function uiAction(a) {
+    if (a === 'camera') { camIndex = (camIndex + 1) % CAMERAS.length; toast('info', 'вид', CAMERA_NAME[CAMERAS[camIndex]]); }
+    else if (a === 'sound') { audio.muted = !audio.muted; toast('info', 'звук', audio.muted ? 'Звук выключен' : 'Звук включён'); }
+    else if (handlers[a]) handlers[a]();
+  }
+
+  // --- сенсорные педали и руль
+  const hold = (el, key) => {
+    const on = e => { e.preventDefault(); audio.unlock(); input.touch[key] = true; el.classList.add('pressed'); };
+    const off = () => { input.touch[key] = false; el.classList.remove('pressed'); };
+    el.addEventListener('pointerdown', on);
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => el.addEventListener(t, off));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  };
+  hold($('t-gas'), 'gas');
+  hold($('t-brake'), 'brake');
+  {
+    const pad = $('t-wheel');
+    let startX = 0, startSteer = 0, pid = null;
+    pad.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      pid = e.pointerId;
+      pad.setPointerCapture(pid);
+      startX = e.clientX;
+      startSteer = handlers.currentSteer();
+      input.touch.steering = true;
+      input.touch.steerAbs = startSteer;
+    });
+    pad.addEventListener('pointermove', e => {
+      if (e.pointerId !== pid) return;
+      const span = pad.clientWidth * 0.42;
+      input.touch.steerAbs = Math.max(-1, Math.min(1, startSteer + (e.clientX - startX) / span));
+    });
+    const end = e => { if (e.pointerId === pid) { pid = null; input.touch.steering = false; } };
+    pad.addEventListener('pointerup', end);
+    pad.addEventListener('pointercancel', end);
+  }
+
+  // --- всплывающие сообщения
+  function toast(kind, badge, body, note) {
+    const box = $('toasts');
+    const el = document.createElement('div');
+    el.className = 'toast panel ' + kind;
+    el.innerHTML = `<b>${esc(badge)}</b><div>${esc(body)}${note ? `<small>${esc(note)}</small>` : ''}</div>`;
+    box.prepend(el);
+    while (box.children.length > 4) box.lastChild.remove();
+    setTimeout(() => el.remove(), kind === 'info' ? 2200 : 6500);
+  }
+  let flashTimer = 0;
+  function flash(msg, small) {
+    const el = $('flash');
+    el.textContent = msg;
+    el.classList.toggle('small', !!small);
+    el.classList.add('on');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => el.classList.remove('on'), small ? 1300 : 1600);
+  }
+
+  function handleEvents(w) {
+    for (const ev of w.exam.events.splice(0)) {
+      if (ev.type === 'command') { flash('Старт!'); audio.command(); }
+      else if (ev.type === 'done') { flash('Выполнено', true); audio.done(); }
+      else if (ev.type === 'skipped') toast('hard', 'КТ11', 'Упражнение пропущено');
+      else if (ev.type === 'penalty') {
+        const p = PENALTIES[ev.code];
+        toast(p.pts >= 100 ? 'hard' : 'pen', '+' + p.pts, p.text, [p.kt, ev.note].filter(Boolean).join(' · '));
+        audio.penalty(p.pts >= 100);
+      } else if (ev.type === 'remark') {
+        toast('remark', 'ПДД', REMARKS[ev.code].text, 'Баллов нет, но это нарушение ПДД');
+        audio.remark();
+      } else if (ev.type === 'end') audio.end(ev.result === 'pass');
+    }
+    for (const n of w.notices.splice(0)) toast('info', 'i', n);
+  }
+
+  // --- HUD
+  const el = id => $(id);
+  const E_ = { taskNo: el('task-no'), taskStep: el('task-step'), taskName: el('task-name'), hint: el('hint'), progress: el('progress'),
+    pts: el('pts'), ptsBox: el('pts-box'), clock: el('clock'), exClock: el('ex-clock'), speed: el('speed'), limit: el('limit'),
+    gears: el('gears'), indL: el('ind-l'), indR: el('ind-r'), belt: el('tell-belt'), engine: el('tell-engine'), hb: el('tell-hb'),
+    wheel: el('wheel'), knob: el('t-knob'), tbBelt: el('tb-belt'), tbEngine: el('tb-engine'), tbHb: el('tb-hb'), tbIndL: el('tb-indL'), tbIndR: el('tb-indR'), tbGears: el('tb-gears') };
+  E_.progress.innerHTML = EXERCISES.map(e => `<span id="pg-${e.id}" title="${esc(e.name)}">${e.no}</span>`).join('');
+  $('clock-limit').textContent = 'из ' + mmss(TIME_LIMIT);
+  let lastBlink = false;
+
+  function exClock(E, w) {
+    if (E.phase !== 'run' || !E.active) return '';
+    const x = E.ex[E.idx], s = x.s;
+    switch (x.id) {
+      case 'start': return s.moved ? '' : 'тронуться: ' + Math.max(0, Math.ceil(20 - E.t)) + ' с';
+      case 'hill': case 'crosswalk':
+        if (s.stopped && !s.started) { const st = E.t - s.stopT; return st < 3 ? 'стоим ' + sec(st) + ' из 3 с' : 'можно ехать · осталось ' + Math.ceil(30 - st) + ' с'; }
+        return '';
+      case 'parallel': return mmss(E.t - x.t0) + ' из 02:00';
+      case 'junction': return s.permissive && !s.cleared ? 'на разрешающий: ' + Math.floor(s.greenT) + ' из 20 с' : '';
+    }
+    return '';
+  }
+
+  function update(w) {
+    const E = w.exam, car = w.car;
+    handleEvents(w);
+    const meta = EXERCISES[E.idx];
+    text(E_.taskNo, E.phase === 'prep' ? 'Подготовка к старту' : 'Упражнение № ' + meta.no);
+    text(E_.taskStep, E.idx + 1 + ' из ' + EXERCISES.length);
+    text(E_.taskName, E.phase === 'prep' ? 'Предстартовая зона' : meta.name);
+    html(E_.hint, renderHint(examHint(E, w)));
+    E.ex.forEach(x => {
+      const node = document.getElementById('pg-' + x.id);
+      const bad = E.log.some(l => l.ex === x.id);
+      const state = x.status === 'skipped' ? 'skipped' : x.status === 'active' ? 'active' : x.status === 'done' ? (bad ? 'bad' : 'done') : '';
+      set(node, 's', state, v => { node.className = v; });
+    });
+    text(E_.pts, String(E.points));
+    cls(E_.ptsBox, 'warn', E.points > 0 && E.points < 100);
+    cls(E_.ptsBox, 'fail', E.points >= 100);
+    text(E_.clock, mmss(E.t));
+    text(E_.exClock, exClock(E, w));
+    const kmh = Math.round(Math.abs(car.v) * 3.6);
+    text(E_.speed, String(kmh));
+    cls(E_.limit, 'over', kmh > SPEED_LIMIT);
+    [...E_.gears.children].forEach(sp => cls(sp, 'on', sp.textContent === car.gear));
+    [...E_.tbGears.children].forEach(b => cls(b, 'on', b.textContent === car.gear));
+    const blink = !!car.ind && car.indTime % 0.66 < 0.33;
+    if (blink !== lastBlink) { if (car.ind || lastBlink) audio.tick(blink); lastBlink = blink; }
+    E_.indL.classList.toggle('on', blink && car.ind < 0);
+    E_.indR.classList.toggle('on', blink && car.ind > 0);
+    cls(E_.tbIndL, 'blink', blink && car.ind < 0);
+    cls(E_.tbIndR, 'blink', blink && car.ind > 0);
+    cls(E_.belt, 'alert', !car.belt);
+    text(E_.belt, car.belt ? 'Ремень ✓' : 'Ремень');
+    cls(E_.engine, 'warn', !car.engine);
+    text(E_.engine, car.engine ? 'Двигатель ✓' : 'Двигатель');
+    cls(E_.hb, 'alert', car.handbrake);
+    cls(E_.tbBelt, 'alert', !car.belt);
+    cls(E_.tbEngine, 'on', car.engine);
+    cls(E_.tbHb, 'alert', car.handbrake);
+    const steer = car.steer / CAR.maxSteer;
+    set(E_.wheel, 'r', Math.round(steer * 90), v => { E_.wheel.style.transform = `rotate(${v * 2}deg)`; });
+    if (isTouch) {
+      const shown = input.touch.steering ? input.touch.steerAbs : steer;
+      set(E_.knob, 'x', Math.round(shown * 100), v => {
+        E_.knob.style.transform = `translateX(${(v / 100) * (E_.knob.parentElement.clientWidth / 2 - 38)}px)`;
+      });
+    } else minimap.draw(w);
+  }
+
+  // --- экраны
+  const show = (id, on) => { $(id).hidden = !on; };
+  function showMenu() {
+    renderHistory();
+    show('menu', true); show('hud', false); show('result', false); show('pause', false); show('touch', false);
+  }
+  // Приборка и сообщения встают над сенсорной панелью, какой бы высоты она ни вышла
+  const measureTouch = () => {
+    if (isTouch && !$('touch').hidden) document.body.style.setProperty('--touch-h', $('touch').offsetHeight + 'px');
+  };
+  window.addEventListener('resize', measureTouch);
+  function showRun() {
+    cache = new WeakMap();
+    $('toasts').innerHTML = '';
+    show('menu', false); show('hud', true); show('result', false); show('pause', false); show('touch', true);
+    measureTouch();
+  }
+  const showPause = on => { show('pause', on); show('touch', !on); measureTouch(); };
+
+  function showResult(w) {
+    const E = w.exam;
+    const pass = E.result === 'pass';
+    const date = new Date().toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    history = [{ pass, points: E.points, time: E.t, practice: E.practice, date }, ...history].slice(0, 8);
+    saveHistory(history);
+    const rows = EXERCISES.map((m, i) => {
+      const x = E.ex[i];
+      const pts = E.log.filter(l => l.ex === m.id).reduce((a, l) => a + l.pts, 0);
+      const status = { done: 'выполнено', skipped: 'пропущено', active: 'прервано', pending: 'не начато' }[x.status];
+      const time = x.t0 == null ? '—' : mmss((x.t1 ?? E.t) - x.t0);
+      return `<tr><td class="kt">№ ${m.no}</td><td>${esc(m.name)}</td><td>${status}</td><td class="num">${time}</td><td class="num">${pts || '—'}</td></tr>`;
+    }).join('');
+    const errs = E.log.map(l => {
+      const p = PENALTIES[l.code];
+      const deck = p.deck ? ` Повторить: карточки «${esc(p.deck)}».` : '';
+      return `<li><span class="p${p.pts >= 100 ? ' hard' : ''}">+${p.pts}</span><div>${esc(p.text)}${l.note ? ` — ${esc(l.note)}` : ''}<small>${esc(p.kt)} · ${esc(EXERCISES.find(e => e.id === l.ex).short)} · ${mmss(l.t)}</small><small class="tip">${esc(p.tip)}${deck}</small></div></li>`;
+    }).join('');
+    const rem = E.remarks.map(r => {
+      const d = REMARKS[r.code];
+      return `<li><span class="p pdd">ПДД</span><div>${esc(d.text)}<small class="tip">${esc(d.rule)}${d.deck ? ` Повторить: карточки «${esc(d.deck)}».` : ''}</small></div></li>`;
+    }).join('');
+    $('protocol').innerHTML = `
+      <header>
+        <div class="doc">Протокол · практический экзамен · автодром · тренажёр</div>
+        <h2>${pass ? 'Экзамен сдан' : 'Экзамен не сдан'}</h2>
+        <div class="meta"><span>Баллы <b>${E.points}</b> из 100</span><span>Время <b>${mmss(E.t)}</b></span><span>Режим <b>${E.practice ? 'тренировка' : 'экзамен'}</b></span><span>${esc(date)}</span></div>
+      </header>
+      <div class="stamp ${pass ? 'pass' : 'fail'}">${pass ? 'Сдал' : 'Не сдал'}</div>
+      <h3>Упражнения</h3>
+      <div class="table-wrap"><table><thead><tr><th>№</th><th>Упражнение</th><th>Итог</th><th>Время</th><th>Баллы</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <h3>Штрафные баллы</h3>
+      ${errs ? `<ul class="errs">${errs}</ul>` : '<p class="clean">Ни одной ошибки по контрольным таблицам.</p>'}
+      ${rem ? `<h3>Нарушения ПДД без баллов</h3><ul class="errs">${rem}</ul>` : ''}
+      <div class="actions">
+        <button class="primary" type="button" data-ui="restart">Пересдать</button>
+        <button type="button" data-ui="menu">В меню</button>
+      </div>
+      <p class="source" style="margin-top:18px;color:var(--paper-muted)">Баллы — по приложению 5 к Правилам приёма экзаменов (приказ МВД РК № 862, ред. на 27.07.2026). Теорию можно повторить в <a href="${CARDS_URL}" target="_blank" rel="noopener">карточках ПДД РК</a>.</p>`;
+    show('result', true); show('hud', false); show('touch', false); show('pause', false);
+  }
+
+  function takeUiActions() {
+    const sim = [];
+    for (const a of input.take()) {
+      if (UI_ACTIONS.has(a)) uiAction(a);
+      else sim.push(a);
+    }
+    return sim;
+  }
+
+  return {
+    input, audio, update, showMenu, showRun, showPause, showResult, takeUiActions, toast,
+    get camMode() { return CAMERAS[camIndex]; },
+    set camIndex(i) { camIndex = i; },
+    get camIndex() { return camIndex; },
+  };
+}
+
+// ---- main.js
+// Точка входа: цикл с фиксированным шагом и режимы «меню / заезд / пауза / протокол».
+
+function boot(saved) {
+  const view = createView(document.getElementById('scene'));
+  let world = createWorld({});
+  let mode = 'menu';
+  let practice = false;
+  let endAt = null;
+  let pending = [];
+
+  const ui = createUI({
+    start: p => start(p),
+    restart: () => start(practice),
+    menu: () => toMenu(),
+    pause: () => { if (mode === 'run') setPause(true); else if (mode === 'pause') setPause(false); },
+    resume: () => { if (mode === 'pause') setPause(false); },
+    currentSteer: () => world.car.steer / CAR.maxSteer,
+  });
+  if (typeof saved.cam === 'number') ui.camIndex = saved.cam;
+  if (saved.muted) ui.audio.muted = true;
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) {
+    window.claude.hot.snapshot(() => ({ cam: ui.camIndex, muted: ui.audio.muted }));
+  }
+
+  function start(p, extra = {}) {
+    practice = p;
+    world = createWorld({ practice: p, ...extra });
+    endAt = null;
+    pending = [];
+    mode = 'run';
+    ui.audio.unlock();
+    ui.showRun();
+  }
+  function toMenu() {
+    world = createWorld({});
+    mode = 'menu';
+    ui.showMenu();
+  }
+  function setPause(on) {
+    mode = on ? 'pause' : 'run';
+    ui.showPause(on);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    const manual = window.__autodrom && window.__autodrom.manual;
+    if (document.hidden && mode === 'run' && !manual) setPause(true);
+  });
+  window.addEventListener('resize', () => view.resize());
+  view.resize();
+
+  let last = performance.now(), acc = 0;
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    const actions = ui.takeUiActions();
+    const manual = window.__autodrom && window.__autodrom.manual;
+    if (mode === 'run' && !manual) {
+      pending.push(...actions);
+      acc += dt;
+      while (acc >= STEP) {
+        const inp = ui.input.read(STEP);
+        inp.actions = pending;
+        pending = [];
+        if (world.exam.phase === 'end') { inp.throttle = 0; inp.brake = 1; inp.actions = []; }
+        stepWorld(world, inp, STEP);
+        acc -= STEP;
+      }
+      ui.update(world);
+      if (world.exam.phase === 'end') {
+        if (endAt == null) endAt = now;
+        const waited = (now - endAt) / 1000;
+        if ((world.car.stillT > 0.4 && waited > 0.8) || waited > 3) {
+          mode = 'result';
+          ui.showResult(world);
+        }
+      }
+    } else if (mode === 'menu' && !manual) {
+      stepWorld(world, { throttle: 0, brake: 1 }, dt);
+    } else {
+      acc = 0;
+    }
+    view.render(world, dt, mode === 'menu' ? 'orbit' : ui.camMode);
+    requestAnimationFrame(frame);
+  }
+
+  // Отладочная сборка (dist/debug.html) даёт доступ к миру, чтобы прогнать маршрут автопилотом
+  if (window.__AUTODROM_DEBUG__) {
+    window.__autodrom = {
+      manual: false,
+      get world() { return world; },
+      start, stepWorld, STEP, ui, view,
+      frame(mode) { ui.update(world); view.render(world, 0.05, mode || ui.camMode); },
+    };
+  }
+
+  document.getElementById('loading').hidden = true;
+  ui.showMenu();
+  requestAnimationFrame(frame);
+}
+
+// Надписи на знаках и табличках рисуются шрифтами страницы — ждём их, но не дольше 2,5 с
+function waitFonts() {
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+  const faces = ['800 40px "Fira Sans Extra Condensed"', '700 40px "Fira Sans Extra Condensed"', '500 16px "Fira Mono"', '400 16px "Fira Sans"'];
+  return Promise.race([
+    Promise.all(faces.map(f => document.fonts.load(f))).catch(() => {}),
+    new Promise(r => setTimeout(r, 2500)),
+  ]);
+}
+
+function run(saved) {
+  if (!window.THREE) {
+    document.getElementById('loading').textContent = 'Не загрузилась библиотека Three.js — проверьте интернет и обновите страницу';
+    return;
+  }
+  waitFonts().then(() => boot(saved || {}));
+}
+
+const hot = window.claude && window.claude.hot;
+if (hot && hot.ready) hot.ready(run);
+else run((hot && hot.data) || {});
+
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
